@@ -1,0 +1,17 @@
+services:
+  motionx:
+    image: node:lts-alpine
+    container_name: motionx
+    restart: unless-stopped
+    working_dir: /app
+    command: node server.js
+    environment:
+      - TZ=Europe/Paris          # your time zone (dates sent to Apple Health)
+      - HEIGHT_CM=175            # stride length estimate
+      - WEIGHT_KG=75             # calorie estimate
+      - HEALTH_MIN_WALK_S=120    # ignore sessions shorter than 2 min for Apple Health
+    ports:
+      - "3000:3000/tcp"          # dashboard + API
+      - "3000:3000/udp"          # real-time packets from the ESP32
+    volumes:
+      - ./app:/app               # code + data/sessions stay on the host

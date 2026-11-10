@@ -1,0 +1,22 @@
+# session data stays local
+server/app/data/
+data/
+
+# Arduino / build
+build/
+*.bin
+*.elf
+*.map
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# private working copy (real Wi-Fi credentials, builds, test sessions)
+_local/
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:,">
+<title>MotionX</title>
+<style>
+  :root{
+    --bg:#000; --fg:#F5F5F7; --mut:#8E8E93; --dim:#48484A;
+    --card:#111113; --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.14);
+    --green:oklch(0.8 0.2 150); --green-hi:oklch(0.88 0.2 150);
+    --orange:oklch(0.78 0.17 55); --blue:oklch(0.78 0.14 240); --pink:oklch(0.75 0.19 15);
+    --round:ui-rounded,'SF Pro Rounded',-apple-system,sans-serif;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;
+       font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Helvetica,sans-serif}
+  a{color:var(--green);text-decoration:none} a:hover{color:var(--green-hi)}
+  button{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:6px}
+  .num{font-variant-numeric:tabular-nums}
+  .round{font-family:var(--round)}
+
+  .page{min-height:100vh;padding:48px 20px 72px}
+  .wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+
+  /* en-tête */
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .date{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+  h1{margin:6px 0 0;font-size:40px;font-weight:700;letter-spacing:-.025em}
+  .pill{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:8px 16px}
+  .pill strong{color:var(--fg);font-weight:500}
+  .dot{display:block;border-radius:50%;background:var(--green);animation:pulse 1.8s infinite}
+  .dot.off{background:var(--dim);animation:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 oklch(0.8 0.2 150 / .55)}70%{box-shadow:0 0 0 10px oklch(0.8 0.2 150 / 0)}100%{box-shadow:0 0 0 0 oklch(0.8 0.2 150 / 0)}}
+
+  /* carte principale */
+  .hero{background:linear-gradient(180deg,#141416 0%,#0B0B0C 100%);border:1px solid var(--hair);border-radius:28px;overflow:hidden}
+  .hero-top{display:flex;flex-wrap:wrap;gap:32px 48px;padding:32px 32px 28px;align-items:stretch}
+  .hero-left{flex:0 1 280px;display:flex;flex-direction:column;justify-content:space-between;gap:36px}
+  .status{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--green)}
+  .status.idle{color:var(--mut)}
+  .speed{display:flex;align-items:baseline;gap:10px}
+  .speed b{font-size:128px;font-weight:600;line-height:.85;letter-spacing:-.04em}
+  .speed span{font-size:22px;font-weight:500;color:var(--mut)}
+  .speed b.none{color:var(--dim)}
+  .hero-chart{flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:10px}
+  .cap{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--mut)}
+
+  .chart{display:grid;grid-template-columns:minmax(0,1fr) 24px;gap:10px}
+  .plot{position:relative;height:200px}
+  .plot .g{position:absolute;left:0;right:0;border-top:1px solid rgba(255,255,255,.06)}
+  .plot .g.base{border-top-color:var(--hair2)}
+  .plot svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 10px oklch(0.8 0.2 150 / .45))}
+  .plot .head{position:absolute;right:-5px;width:10px;height:10px;margin-top:-5px}
+  .plot .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--mut)}
+  .yax{position:relative;font-size:11px;color:var(--mut)}
+  .yax span{position:absolute;left:0}
+  .xax{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);padding-right:34px}
+
+  .stats{display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
+  .stat{flex:1 1 160px;padding:20px 32px;display:flex;flex-direction:column;gap:4px}
+  .stat + .stat{border-left:1px solid var(--hair)}
+  .stat small{font-size:13px;color:var(--mut)}
+  .stat b{font-family:var(--round);font-size:30px;font-weight:600;white-space:nowrap}
+  .unit{font-size:17px;font-weight:500;color:var(--mut);letter-spacing:0}
+
+  /* sections */
+  section.block{display:flex;flex-direction:column;gap:18px}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .sec-head > div{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  h2{margin:0;font-size:24px;font-weight:700;letter-spacing:-.015em}
+  .sub{font-size:15px;color:var(--mut)}
+  .seg{display:flex;background:rgba(118,118,128,.24);border-radius:10px;padding:2px;gap:2px}
+  .seg button{border:0;font-size:13px;font-weight:600;padding:7px 18px;border-radius:8px;cursor:pointer;background:transparent;color:var(--fg)}
+  .seg button[aria-pressed="true"]{background:#636366}
+
+  .cums{display:flex;flex-wrap:wrap;gap:12px}
+  .cum{flex:1 1 max(180px,22%);background:var(--card);border:1px solid var(--hair);border-radius:20px;padding:20px 22px;display:flex;flex-direction:column;gap:32px}
+  .cum .t{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
+  .cum .t i{width:8px;height:8px;border-radius:50%;background:currentColor}
+  .cum b{font-family:var(--round);font-size:40px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+
+  /* liste des séances */
+  .groups{display:flex;flex-direction:column;gap:28px}
+  .gtitle{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);padding-left:22px;margin-bottom:10px}
+  .box{background:var(--card);border:1px solid var(--hair);border-radius:20px;overflow:hidden}
+  .row{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;padding:16px 22px;width:100%;border:0;background:transparent;text-align:left;cursor:pointer}
+  .row:hover{background:rgba(255,255,255,.03)}
+  .item + .item{border-top:1px solid var(--hair)}
+  .row .time{flex:0 0 52px;font-size:15px;color:var(--mut)}
+  .row .main{flex:1 1 180px;display:flex;align-items:baseline;gap:12px}
+  .row .dist{font-family:var(--round);font-size:24px;font-weight:600;color:var(--green);white-space:nowrap}
+  .row .dist small{font-size:15px;font-weight:500}
+  .row .walk{font-size:15px;white-space:nowrap}
+  .row .kv{display:grid;grid-template-columns:repeat(4,64px);gap:20px}
+  .row .kv b{display:block;font-size:16px;font-weight:600}
+  .row .kv small{font-size:12px;color:var(--mut)}
+  .row .end{display:flex;align-items:center;gap:14px;margin-left:auto}
+  .health{font-size:12px;color:var(--mut);white-space:nowrap;min-width:76px;text-align:right}
+  .health.ok{color:var(--green)}
+  .chev{font-size:20px;color:var(--dim);transition:transform .2s ease}
+  .row[aria-expanded="true"] .chev{transform:rotate(90deg)}
+  .detail{padding:4px 22px 22px}
+  .detail .cap{margin-bottom:10px}
+  .more{align-self:center;border:1px solid rgba(255,255,255,.1);background:transparent;border-radius:999px;padding:8px 18px;font-size:14px;color:var(--fg);cursor:pointer}
+  .more:hover{background:rgba(255,255,255,.04)}
+
+  /* tableau */
+  .table{overflow-x:auto}
+  .table .in{min-width:760px}
+  .tr{display:grid;grid-template-columns:1.6fr repeat(6,1fr) 1.2fr;gap:12px;padding:14px 22px;font-size:15px;text-align:right}
+  .tr > :first-child{text-align:left}
+  .tr.th{font-size:13px;font-weight:600;color:var(--mut);border-bottom:1px solid var(--hair)}
+  .tr + .tr:not(.th){border-top:1px solid var(--hair)}
+  .tr .d{color:var(--green)}
+
+  .empty-state{padding:28px 22px;color:var(--mut);font-size:15px;line-height:1.5}
+  .note{margin:0;font-size:13px;line-height:1.6;color:var(--mut);padding:0 22px;max-width:75ch}
+  .note code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:var(--fg)}
+
+  @media (max-width:620px){
+    .page{padding-top:32px}
+    .speed b{font-size:96px}
+    .hero-top{padding:24px 22px 22px}
+    .stat{padding:16px 22px}
+    .row .kv{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:100%}
+    .row .end{margin-left:0}
+    .health{min-width:0;text-align:left}
+    .stat{flex:1 1 0;min-width:0;padding:14px 16px}
+    .stat b{font-size:22px}
+    .stat .unit{font-size:14px}
+    .cum{flex:1 1 calc(50% - 6px);gap:18px;padding:16px 18px}
+    .cum b{font-size:30px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .dot{animation:none}
+    .chev{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="page"><div class="wrap">
+
+  <header>
+    <div>
+      <div class="date" id="today"></div>
+      <h1>MotionX</h1>
+    </div>
+    <div class="pill" aria-live="polite">
+      <span class="dot off" id="pdot" style="width:8px;height:8px"></span>
+      <strong id="pstate">Connecting…</strong>
+      <span id="plinkwrap" hidden>·</span>
+      <a id="plink" href="#" target="_blank" rel="noopener" hidden>device page</a>
+    </div>
+  </header>
+
+  <section class="hero" aria-label="Treadmill status">
+    <div class="hero-top">
+      <div class="hero-left">
+        <span class="status idle" id="status">–</span>
+        <div class="speed round num"><b id="speed" class="none">0.0</b><span>km/h</span></div>
+      </div>
+      <div class="hero-chart">
+        <div class="cap"><span id="ccap">Speed</span><span class="num" id="cmax"></span></div>
+        <div id="heroChart"></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><small>Session</small><b class="num" id="sEl">–</b></div>
+      <div class="stat"><small>Walking</small><b class="num" id="sWk">–</b></div>
+      <div class="stat"><small>Distance</small><b class="num" id="sDi">–</b></div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="hcum">
+    <div class="sec-head">
+      <div><h2 id="hcum">Totals</h2><span class="sub" id="cumSub"></span></div>
+      <div class="seg" role="group" aria-label="Period">
+        <button data-p="day" aria-pressed="true">Day</button>
+        <button data-p="week" aria-pressed="false">7 days</button>
+        <button data-p="all" aria-pressed="false">Total</button>
+      </div>
+    </div>
+    <div class="cums">
+      <div class="cum"><div class="t" style="color:var(--orange)"><i></i><span>Distance</span></div><b class="num" id="cDi">–</b></div>
+      <div class="cum"><div class="t" style="color:var(--green)"><i></i><span>Walking</span></div><b class="num" id="cWk">–</b></div>
+      <div class="cum"><div class="t" style="color:var(--blue)"><i></i><span>Steps</span></div><b class="num" id="cSt">–</b></div>
+      <div class="cum"><div class="t" style="color:var(--pink)"><i></i><span>Active energy</span></div><b class="num" id="cKc">–</b></div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="hses">
+    <div class="sec-head">
+      <div><h2 id="hses">Sessions</h2><span class="sub" id="healthSub"></span></div>
+      <div class="seg" role="group" aria-label="View">
+        <button data-v="list" aria-pressed="true">List</button>
+        <button data-v="table" aria-pressed="false">Table</button>
+      </div>
+    </div>
+    <div id="sessions"></div>
+    <button class="more" id="more" hidden>Show older sessions</button>
+  </section>
+
+  <p class="note" id="note"></p>
+
+</div></div>
+
+<script>
+// ---------------------------------------------------------------- outils
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf = new Intl.NumberFormat('en-GB');
+const dur = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s/3600), m = Math.floor(s/60) % 60, x = String(s % 60).padStart(2, '0');
+  return h ? h + ':' + String(m).padStart(2, '0') + ':' + x : m + ':' + x; };
+const km = m => { const k = m / 1000; return k >= 1 ? k.toFixed(2) : k.toFixed(3); };
+const unit = u => '<span class="unit"> ' + u + '</span>';
+const dayKey = d => d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+const STATES = { 0: 'Starting up', 1: 'Standby', 2: 'Countdown', 3: 'Walking', 5: 'Slowing down' };
+
+$('today').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+// ---------------------------------------------------------------- graphique de vitesse (marches d'escalier)
+// events = [[ms, état, vitesse×10], ...]   T = durée en ms
+function chartHTML(events, T, opts = {}){
+  T = Math.max(1000, T);
+  const top = Math.max(2, Math.ceil(Math.max(0, ...events.map(e => e[2])) / 10));
+  const X = t => (Math.min(t, T) / T * 1000).toFixed(1), Y = v => (200 - (v / 10) / top * 200).toFixed(1);
+  let d = 'M0 ' + Y(0), last = 0;
+  for (const [t, , v] of events){ d += ' L' + X(t) + ' ' + Y(last) + ' L' + X(t) + ' ' + Y(v); last = v; }
+  d += ' L1000 ' + Y(last);
+  const mid = top / 2, lbl = v => Number.isInteger(v) ? v : v.toFixed(1);
+  const id = 'f' + Math.random().toString(36).slice(2, 8);
+  const headTop = (200 - (last / 10) / top * 200) / 2;          // en % de la hauteur
+  return '<div class="chart"><div class="plot">' +
+    '<div class="g" style="top:0"></div><div class="g" style="top:50%"></div><div class="g base" style="bottom:0"></div>' +
+    (events.length ? '<svg viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="oklch(0.8 0.2 150)" stop-opacity=".32"/><stop offset="1" stop-color="oklch(0.8 0.2 150)" stop-opacity="0"/></linearGradient></defs>' +
+      '<path d="' + d + ' L1000 200 L0 200 Z" fill="url(#' + id + ')"/>' +
+      '<path d="' + d + '" fill="none" stroke="oklch(0.8 0.2 150)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>' +
+      (opts.head ? '<span class="dot head" style="top:' + headTop + '%"></span>' : '')
+      : '<div class="empty">' + esc(opts.empty || 'No data') + '</div>') +
+    '</div><div class="yax num"><span style="top:-7px">' + lbl(top) + '</span><span style="top:calc(50% - 7px)">' + lbl(mid) + '</span><span style="bottom:-7px">0</span></div></div>' +
+    '<div class="xax num"><span>0:00</span><span>' + dur(T / 1000) + '</span></div>';
+}
+
+// ---------------------------------------------------------------- état
+let live = null, trace = { session_id: 0, events: [] }, streamOk = false;
+let sessions = [], profile = null, minWalk = 0;
+let period = 'day', view = 'list', shown = 25, open = new Set();
+try { view = localStorage.getItem('motionx-view') || 'list'; period = localStorage.getItem('motionx-period') || 'day'; } catch {}
+
+// ---------------------------------------------------------------- carte principale
+function renderHero(){
+  const l = live, now = Date.now();
+  const age = l && l.received_at ? (now - l.received_at) / 1000 : Infinity;
+  const online = age < 20;
+  const signal = online && l.signal;
+  const active = signal && l.in_session;
+
+  // pastille
+  $('pdot').className = 'dot' + (online ? '' : ' off');
+  $('pstate').textContent = !l ? (streamOk ? 'Waiting for the ESP32' : 'Connecting…') : online ? (streamOk ? 'Live' : 'Connected') : 'Offline';
+  const hasLink = l && l.from;
+  $('plink').hidden = $('plinkwrap').hidden = !hasLink;
+  if (hasLink) $('plink').href = 'http://' + l.from;
+
+  // statut et vitesse
+  const st = $('status');
+  st.textContent = !l ? 'Waiting' : !online ? 'ESP32 offline' : !l.signal ? 'Treadmill off' : (STATES[l.state] || l.state_name);
+  st.className = 'status' + (active ? '' : ' idle');
+  $('speed').textContent = signal ? l.speed_kmh.toFixed(1) : '0.0';
+  $('speed').className = signal ? '' : 'none';
+
+  if (active){
+    const extra = (now - l.received_at) / 1000;                 // le compteur avance entre deux paquets
+    const moving = l.speed_kmh > 0;
+    $('sEl').textContent = dur(l.elapsed_s + extra);
+    $('sWk').textContent = dur(l.walk_s + (moving ? extra : 0));
+    $('sDi').innerHTML = km(l.distance_m + (moving ? l.speed_kmh / 3.6 * extra : 0)) + unit('km');
+    const T = (l.session_ms || 0) + extra * 1000;
+    const vmax = Math.max(0, ...trace.events.map(e => e[2])) / 10;
+    $('ccap').textContent = 'Speed · current session';
+    $('cmax').textContent = vmax ? 'max ' + vmax.toFixed(1) + ' km/h' : '';
+    $('heroChart').innerHTML = chartHTML(trace.events, T, { head: true, empty: 'Starting…' });
+  } else {                                                      // au repos : rien à afficher, la dernière séance est dans la liste
+    $('sEl').textContent = $('sWk').textContent = '0:00';
+    $('sDi').innerHTML = '0.000' + unit('km');
+    $('ccap').textContent = 'Speed'; $('cmax').textContent = '';
+    const msg = !l ? 'Waiting for the ESP32' : !online ? 'The ESP32 is not responding' : !l.signal ? 'Turn on the treadmill' : 'Start walking to see the chart';
+    if ($('heroChart').dataset.msg !== msg){ $('heroChart').innerHTML = chartHTML([], 60000, { empty: msg }); $('heroChart').dataset.msg = msg; }
+    return;
+  }
+  delete $('heroChart').dataset.msg;
+}
+
+// ---------------------------------------------------------------- cumul
+function renderCumul(){
+  document.querySelectorAll('[data-p]').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === period));
+  const now = new Date(), day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
+  const from = period === 'day' ? day0 : period === 'week' ? day0 - 6 * 86400 : 0;
+  const list = sessions.filter(s => s.start >= from);
+  const t = list.reduce((a, s) => ({ d: a.d + s.computed.distance_m, w: a.w + s.computed.walk_s, p: a.p + s.computed.steps, k: a.k + s.computed.kcal }), { d: 0, w: 0, p: 0, k: 0 });
+  const label = { day: 'Today', week: 'Last 7 days', all: 'All time' }[period];
+  $('cumSub').textContent = label + ' · ' + list.length + ' session' + (list.length === 1 ? '' : 's');
+  $('cDi').innerHTML = km(t.d) + unit('km');
+  $('cWk').textContent = dur(t.w);
+  $('cSt').innerHTML = nf.format(t.p) + unit('steps');
+  $('cKc').innerHTML = nf.format(t.k) + unit('kcal');
+}
+
+// ---------------------------------------------------------------- séances
+const healthLabel = s => s.health_synced ? ['ok', '✓ Health'] : s.health_ignored ? ['', 'too short'] : ['', 'pending'];
+
+function rowHTML(s){
+  const c = s.computed, d = new Date(s.start * 1000), [cls, txt] = healthLabel(s), isOpen = open.has(s.file);
+  return '<div class="item"><button class="row" data-f="' + esc(s.file) + '" aria-expanded="' + isOpen + '">' +
+    '<span class="time num">' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + (s.start_estimated ? '≈' : '') + '</span>' +
+    '<span class="main"><span class="dist num">' + km(c.distance_m) + '<small> km</small></span><span class="walk num">' + dur(c.walk_s) + '</span></span>' +
+    '<span class="kv num">' +
+      '<span><b>' + nf.format(c.steps) + '</b><small>steps</small></span>' +
+      '<span><b>' + c.kcal + '</b><small>kcal</small></span>' +
+      '<span><b>' + (s.avg_kmh || 0).toFixed(1) + '</b><small>avg km/h</small></span>' +
+      '<span><b>' + (s.max_kmh || 0).toFixed(1) + '</b><small>max km/h</small></span></span>' +
+    '<span class="end"><span class="health ' + cls + '">' + txt + '</span><span class="chev" aria-hidden="true">›</span></span>' +
+    '</button>' + (isOpen ? '<div class="detail" id="d-' + esc(s.file) + '"><div class="empty-state" style="padding:0">Loading…</div></div>' : '') + '</div>';
+}
+
+function groupTitle(d){
+  const today = new Date(), y = new Date(today); y.setDate(today.getDate() - 1);
+  const long = d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  return dayKey(d) === dayKey(today) ? 'Today · ' + long : dayKey(d) === dayKey(y) ? 'Yesterday · ' + long : long;
+}
+
+function renderSessions(){
+  document.querySelectorAll('[data-v]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === view));
+  const pending = sessions.filter(s => !s.health_synced && !s.health_ignored).length;
+  $('healthSub').textContent = !sessions.length ? '' : pending ? 'Health · ' + pending + ' waiting to sync' : 'Health · all synced';
+
+  const box = $('sessions'), list = sessions.slice(0, shown);
+  $('more').hidden = sessions.length <= shown;
+  if (!sessions.length){
+    box.innerHTML = '<div class="box"><div class="empty-state">No sessions yet. Each walk on the treadmill will show up here as soon as you stop.</div></div>';
+    return;
+  }
+  if (view === 'table'){
+    box.innerHTML = '<div class="box table"><div class="in"><div class="tr th"><span>Start</span><span>Walking</span><span>Distance</span><span>Steps (est.)</span><span>kcal (est.)</span><span>Avg</span><span>Max</span><span>Health</span></div>' +
+      list.map(s => { const c = s.computed, [cls, txt] = healthLabel(s);
+        return '<div class="tr num"><span>' + new Date(s.start * 1000).toLocaleString('en-GB', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</span>' +
+          '<span>' + dur(c.walk_s) + '</span><span class="d">' + km(c.distance_m) + ' km</span><span>' + nf.format(c.steps) + '</span><span>' + c.kcal + '</span>' +
+          '<span>' + (s.avg_kmh || 0).toFixed(1) + '</span><span>' + (s.max_kmh || 0).toFixed(1) + '</span><span class="health ' + cls + '" style="font-size:13px">' + txt + '</span></div>'; }).join('') +
+      '</div></div>';
+    return;
+  }
+  const groups = [];
+  for (const s of list){
+    const d = new Date(s.start * 1000), k = dayKey(d);
+    if (!groups.length || groups[groups.length - 1].k !== k) groups.push({ k, title: groupTitle(d), items: [] });
+    groups[groups.length - 1].items.push(s);
+  }
+  box.innerHTML = '<div class="groups">' + groups.map(g => '<div><div class="gtitle">' + esc(g.title) + '</div><div class="box">' + g.items.map(rowHTML).join('') + '</div></div>').join('') + '</div>';
+  box.querySelectorAll('.row').forEach(b => b.onclick = () => toggle(b.dataset.f));
+  open.forEach(loadDetail);
+}
+
+function toggle(file){
+  open.has(file) ? open.delete(file) : open.add(file);
+  renderSessions();
+}
+
+const detailCache = {};
+async function fetchSession(file){
+  if (!detailCache[file]) detailCache[file] = (await fetch('/api/sessions/' + encodeURIComponent(file))).json();
+  return detailCache[file];
+}
+async function loadDetail(file){
+  try{
+    const s = await fetchSession(file), el = document.getElementById('d-' + file);
+    if (!el) return;
+    el.innerHTML = '<div class="cap"><span>Speed · ' + dur(s.duration_s || 0) + ' total</span><span class="num">max ' + (s.max_kmh || 0).toFixed(1) + ' km/h</span></div>' +
+      chartHTML(s.events || [], (s.duration_s || 1) * 1000);
+  }catch(e){ const el = document.getElementById('d-' + file); if (el) el.innerHTML = '<div class="empty-state" style="padding:0">Couldn\u2019t load this session.</div>'; }
+}
+
+// ---------------------------------------------------------------- données
+async function refreshSessions(){
+  try{
+    const data = await (await fetch('/api/sessions')).json();
+    sessions = data.sessions; profile = data.profile; minWalk = data.health_min_walk_s || 0;
+    $('note').innerHTML = 'Steps and calories are estimated by the server from speed (profile ' + profile.height_cm + ' cm, ' + profile.weight_kg + ' kg).' +
+      (minWalk ? ' Sessions shorter than ' + dur(minWalk) + ' are not sent to Health.' : '') +
+      ' Raw files are in <code>data/sessions/</code>.';
+    renderCumul(); renderSessions(); renderHero();
+  }catch(e){}
+}
+
+function connectStream(){
+  const es = new EventSource('/api/stream');
+  es.addEventListener('init', e => { const d = JSON.parse(e.data); live = d.live; trace = d.trace || trace; streamOk = true; renderHero(); });
+  es.addEventListener('live', e => {
+    const d = JSON.parse(e.data); live = d.live;
+    if (d.session_id !== trace.session_id) trace = { session_id: d.session_id, events: [] };
+    if (d.point) trace.events.push(d.point);
+    streamOk = true; renderHero();
+  });
+  es.addEventListener('session', () => refreshSessions());
+  es.onerror = () => { streamOk = false; renderHero(); };
+}
+
+async function pollLive(){
+  if (streamOk) return renderHero();                            // le flux marche : on rafraîchit l'affichage (compteurs, âge)
+  try{ const d = await (await fetch('/api/live')).json(); live = d.live; trace = d.trace || trace; renderHero(); }
+  catch(e){ $('pstate').textContent = 'Serveur injoignable'; $('pdot').className = 'dot off'; }
+}
+
+// ---------------------------------------------------------------- interactions
+document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { period = b.dataset.p; try { localStorage.setItem('motionx-period', period); } catch {} renderCumul(); });
+document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem('motionx-view', view); } catch {} renderSessions(); });
+$('more').onclick = () => { shown += 25; renderSessions(); };
+
+connectStream(); pollLive(); refreshSessions();
+setInterval(pollLive, 1000);
+setInterval(refreshSessions, 60000);
+setInterval(() => { $('today').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }, 60000);
+</script>
+</body>
+</html>
