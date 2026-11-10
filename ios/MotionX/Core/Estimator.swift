@@ -1,7 +1,7 @@
 import Foundation
 
-/// Copie exacte des formules de server.js (strideMeters, kcalPerMin, compute),
-/// pour estimer pas et calories pendant la séance en cours.
+/// Exact copy of the formulas in server.js (strideMeters, kcalPerMin, compute),
+/// to estimate steps and calories during the ongoing session.
 enum Estimator {
     static func strideMeters(_ kmh: Double, _ p: Profile) -> Double {
         let base = p.heightCm * 0.00414

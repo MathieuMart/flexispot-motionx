@@ -27,11 +27,11 @@ struct RootView: View {
     var body: some View {
         TabView {
             LiveView()
-                .tabItem { Label("Direct", systemImage: "figure.walk") }
+                .tabItem { Label("Live", systemImage: "figure.walk") }
             HistoryView()
-                .tabItem { Label("Historique", systemImage: "calendar") }
+                .tabItem { Label("History", systemImage: "calendar") }
             SettingsView()
-                .tabItem { Label("Réglages", systemImage: "gearshape") }
+                .tabItem { Label("Settings", systemImage: "gearshape") }
         }
     }
 }

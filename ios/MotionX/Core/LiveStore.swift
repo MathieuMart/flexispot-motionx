@@ -1,8 +1,8 @@
 import Foundation
 import Observation
 
-/// Suit l'état du tapis en temps réel via le flux Server-Sent Events /api/stream,
-/// avec repli sur GET /api/live si le flux tombe.
+/// Tracks the treadmill state in real time through the Server-Sent Events stream /api/stream,
+/// falling back to GET /api/live if the stream drops.
 @MainActor @Observable
 final class LiveStore {
     enum Connection: Equatable {
@@ -15,9 +15,9 @@ final class LiveStore {
     private(set) var traceSessionId = 0
     private(set) var connection: Connection = .idle
 
-    /// Appelé quand le serveur signale une séance (nouvelle séance reçue = `id` présent).
+    /// Called when the server reports a session (new session received = `id` present).
     @ObservationIgnored var onSessionEvent: ((StreamSession) -> Void)?
-    /// Appelé à chaque nouvel état reçu.
+    /// Called on every new state received.
     @ObservationIgnored var onUpdate: (() -> Void)?
     @ObservationIgnored private var currentBase: URL?
 
@@ -27,14 +27,14 @@ final class LiveStore {
 
     @ObservationIgnored private let session: URLSession = {
         let cfg = URLSessionConfiguration.default
-        cfg.timeoutIntervalForRequest = 45          // le serveur envoie un ping toutes les 15 s
+        cfg.timeoutIntervalForRequest = 45          // the server sends a ping every 15 s
         cfg.timeoutIntervalForResource = 24 * 3600
         cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: cfg)
     }()
 
     func start(api: APIClient?) {
-        if task != nil, api?.base == currentBase { return }   // déjà connecté au même serveur
+        if task != nil, api?.base == currentBase { return }   // already connected to the same server
         stop()
         guard let api else { connection = .idle; return }
         currentBase = api.base
@@ -55,7 +55,7 @@ final class LiveStore {
                 try await stream(api)
             } catch {
                 if Task.isCancelled { return }
-                // Le flux ne passe pas : on récupère au moins le dernier état connu.
+                // The stream does not get through: at least fetch the last known state.
                 if let r = try? await api.live() {
                     apply(live: r.live, trace: r.trace)
                     connection = .polling
@@ -73,7 +73,7 @@ final class LiveStore {
         let (bytes, resp) = try await session.bytes(for: req)
         if let http = resp as? HTTPURLResponse, http.statusCode != 200 { throw APIError.http(http.statusCode) }
 
-        // Le serveur envoie toujours "event: X" puis une seule ligne "data: {...}".
+        // The server always sends "event: X" followed by a single "data: {...}" line.
         var event = "message"
         for try await line in bytes.lines {
             if line.hasPrefix("event:") {

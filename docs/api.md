@@ -22,12 +22,12 @@ Sent by `/api/status`, by UDP and by `POST /api/live`:
 
 ```json
 { "device":"motionx", "fw":"3.0", "ts":1794338616, "uptime_s":5230,
-  "signal":true, "state":3, "state_name":"en marche", "speed_kmh":3.4,
+  "signal":true, "state":3, "state_name":"walking", "speed_kmh":3.4,
   "in_session":true, "session_id":12, "session_ms":95400, "elapsed_s":95, "walk_s":91, "distance_m":78.4,
   "frames_ok":8123, "frames_bad":2, "edges_lost":0,
   "stored":12, "pending":0, "fs_used_kb":64, "fs_total_kb":1408,
   "wifi":true, "ssid":"…", "ip":"192.168.1.23", "rssi":-58, "ap":false, "server":"http://192.168.1.10:3000", "udp_sent":420,
-  "heap":201000, "heap_min":176000, "reset":"mise sous tension", "crashes":0, "safe_mode":false }
+  "heap":201000, "heap_min":176000, "reset":"power-on", "crashes":0, "safe_mode":false }
 ```
 
 ## ESP32 → server
@@ -47,7 +47,7 @@ Sent by `/api/status`, by UDP and by `POST /api/live`:
   "events":[[0,2,0],[3010,3,10],[3130,3,11], …] }
 ```
 
-`events` are the raw changes: `[ms since start, state, speed×10]`. `start` is a Unix timestamp (0 if the ESP32 had no NTP time yet — the server then estimates it). `end` is `stop`, `signal_perdu` (signal lost), `interrompue` (power cut, recovered) or `mise_a_jour` (OTA during a walk).
+`events` are the raw changes: `[ms since start, state, speed×10]`. `start` is a Unix timestamp (0 if the ESP32 had no NTP time yet — the server then estimates it). `end` is `stop`, `signal_lost` (no frame for 3 s), `interrupted` (power cut, session recovered) or `update` (OTA during a walk). Sessions recorded by older firmware use `signal_perdu`, `interrompue` and `mise_a_jour` instead.
 
 ## Server (`http://<server>:3000`)
 

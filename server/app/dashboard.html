@@ -28,7 +28,7 @@
   .page{min-height:100vh;padding:48px 20px 72px}
   .wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
 
-  /* en-tête */
+  /* header */
   header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
   .date{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
   h1{margin:6px 0 0;font-size:40px;font-weight:700;letter-spacing:-.025em}
@@ -38,7 +38,7 @@
   .dot.off{background:var(--dim);animation:none}
   @keyframes pulse{0%{box-shadow:0 0 0 0 oklch(0.8 0.2 150 / .55)}70%{box-shadow:0 0 0 10px oklch(0.8 0.2 150 / 0)}100%{box-shadow:0 0 0 0 oklch(0.8 0.2 150 / 0)}}
 
-  /* carte principale */
+  /* main card */
   .hero{background:linear-gradient(180deg,#141416 0%,#0B0B0C 100%);border:1px solid var(--hair);border-radius:28px;overflow:hidden}
   .hero-top{display:flex;flex-wrap:wrap;gap:32px 48px;padding:32px 32px 28px;align-items:stretch}
   .hero-left{flex:0 1 280px;display:flex;flex-direction:column;justify-content:space-between;gap:36px}
@@ -85,7 +85,7 @@
   .cum .t i{width:8px;height:8px;border-radius:50%;background:currentColor}
   .cum b{font-family:var(--round);font-size:40px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
 
-  /* liste des séances */
+  /* session list */
   .groups{display:flex;flex-direction:column;gap:28px}
   .gtitle{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);padding-left:22px;margin-bottom:10px}
   .box{background:var(--card);border:1px solid var(--hair);border-radius:20px;overflow:hidden}
@@ -110,7 +110,7 @@
   .more{align-self:center;border:1px solid rgba(255,255,255,.1);background:transparent;border-radius:999px;padding:8px 18px;font-size:14px;color:var(--fg);cursor:pointer}
   .more:hover{background:rgba(255,255,255,.04)}
 
-  /* tableau */
+  /* table */
   .table{overflow-x:auto}
   .table .in{min-width:760px}
   .tr{display:grid;grid-template-columns:1.6fr repeat(6,1fr) 1.2fr;gap:12px;padding:14px 22px;font-size:15px;text-align:right}
@@ -211,7 +211,7 @@
 </div></div>
 
 <script>
-// ---------------------------------------------------------------- outils
+// ---------------------------------------------------------------- utilities
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const nf = new Intl.NumberFormat('en-GB');
@@ -224,8 +224,8 @@ const STATES = { 0: 'Starting up', 1: 'Standby', 2: 'Countdown', 3: 'Walking', 5
 
 $('today').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
-// ---------------------------------------------------------------- graphique de vitesse (marches d'escalier)
-// events = [[ms, état, vitesse×10], ...]   T = durée en ms
+// ---------------------------------------------------------------- speed chart (stair steps)
+// events = [[ms, state, speed×10], ...]   T = duration in ms
 function chartHTML(events, T, opts = {}){
   T = Math.max(1000, T);
   const top = Math.max(2, Math.ceil(Math.max(0, ...events.map(e => e[2])) / 10));
@@ -235,7 +235,7 @@ function chartHTML(events, T, opts = {}){
   d += ' L1000 ' + Y(last);
   const mid = top / 2, lbl = v => Number.isInteger(v) ? v : v.toFixed(1);
   const id = 'f' + Math.random().toString(36).slice(2, 8);
-  const headTop = (200 - (last / 10) / top * 200) / 2;          // en % de la hauteur
+  const headTop = (200 - (last / 10) / top * 200) / 2;          // in % of the height
   return '<div class="chart"><div class="plot">' +
     '<div class="g" style="top:0"></div><div class="g" style="top:50%"></div><div class="g base" style="bottom:0"></div>' +
     (events.length ? '<svg viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
@@ -248,13 +248,13 @@ function chartHTML(events, T, opts = {}){
     '<div class="xax num"><span>0:00</span><span>' + dur(T / 1000) + '</span></div>';
 }
 
-// ---------------------------------------------------------------- état
+// ---------------------------------------------------------------- state
 let live = null, trace = { session_id: 0, events: [] }, streamOk = false;
 let sessions = [], profile = null, minWalk = 0;
 let period = 'day', view = 'list', shown = 25, open = new Set();
 try { view = localStorage.getItem('motionx-view') || 'list'; period = localStorage.getItem('motionx-period') || 'day'; } catch {}
 
-// ---------------------------------------------------------------- carte principale
+// ---------------------------------------------------------------- main card
 function renderHero(){
   const l = live, now = Date.now();
   const age = l && l.received_at ? (now - l.received_at) / 1000 : Infinity;
@@ -262,14 +262,14 @@ function renderHero(){
   const signal = online && l.signal;
   const active = signal && l.in_session;
 
-  // pastille
+  // status pill
   $('pdot').className = 'dot' + (online ? '' : ' off');
   $('pstate').textContent = !l ? (streamOk ? 'Waiting for the ESP32' : 'Connecting…') : online ? (streamOk ? 'Live' : 'Connected') : 'Offline';
   const hasLink = l && l.from;
   $('plink').hidden = $('plinkwrap').hidden = !hasLink;
   if (hasLink) $('plink').href = 'http://' + l.from;
 
-  // statut et vitesse
+  // status and speed
   const st = $('status');
   st.textContent = !l ? 'Waiting' : !online ? 'ESP32 offline' : !l.signal ? 'Treadmill off' : (STATES[l.state] || l.state_name);
   st.className = 'status' + (active ? '' : ' idle');
@@ -277,7 +277,7 @@ function renderHero(){
   $('speed').className = signal ? '' : 'none';
 
   if (active){
-    const extra = (now - l.received_at) / 1000;                 // le compteur avance entre deux paquets
+    const extra = (now - l.received_at) / 1000;                 // the counter keeps running between two packets
     const moving = l.speed_kmh > 0;
     $('sEl').textContent = dur(l.elapsed_s + extra);
     $('sWk').textContent = dur(l.walk_s + (moving ? extra : 0));
@@ -287,7 +287,7 @@ function renderHero(){
     $('ccap').textContent = 'Speed · current session';
     $('cmax').textContent = vmax ? 'max ' + vmax.toFixed(1) + ' km/h' : '';
     $('heroChart').innerHTML = chartHTML(trace.events, T, { head: true, empty: 'Starting…' });
-  } else {                                                      // au repos : rien à afficher, la dernière séance est dans la liste
+  } else {                                                      // idle: nothing to display, the last session is in the list
     $('sEl').textContent = $('sWk').textContent = '0:00';
     $('sDi').innerHTML = '0.000' + unit('km');
     $('ccap').textContent = 'Speed'; $('cmax').textContent = '';
@@ -298,8 +298,8 @@ function renderHero(){
   delete $('heroChart').dataset.msg;
 }
 
-// ---------------------------------------------------------------- cumul
-function renderCumul(){
+// ---------------------------------------------------------------- totals
+function renderTotals(){
   document.querySelectorAll('[data-p]').forEach(b => b.setAttribute('aria-pressed', b.dataset.p === period));
   const now = new Date(), day0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() / 1000;
   const from = period === 'day' ? day0 : period === 'week' ? day0 - 6 * 86400 : 0;
@@ -313,7 +313,7 @@ function renderCumul(){
   $('cKc').innerHTML = nf.format(t.k) + unit('kcal');
 }
 
-// ---------------------------------------------------------------- séances
+// ---------------------------------------------------------------- sessions
 const healthLabel = s => s.health_synced ? ['ok', '✓ Health'] : s.health_ignored ? ['', 'too short'] : ['', 'pending'];
 
 function rowHTML(s){
@@ -386,7 +386,7 @@ async function loadDetail(file){
   }catch(e){ const el = document.getElementById('d-' + file); if (el) el.innerHTML = '<div class="empty-state" style="padding:0">Couldn\u2019t load this session.</div>'; }
 }
 
-// ---------------------------------------------------------------- données
+// ---------------------------------------------------------------- data
 async function refreshSessions(){
   try{
     const data = await (await fetch('/api/sessions')).json();
@@ -394,7 +394,7 @@ async function refreshSessions(){
     $('note').innerHTML = 'Steps and calories are estimated by the server from speed (profile ' + profile.height_cm + ' cm, ' + profile.weight_kg + ' kg).' +
       (minWalk ? ' Sessions shorter than ' + dur(minWalk) + ' are not sent to Health.' : '') +
       ' Raw files are in <code>data/sessions/</code>.';
-    renderCumul(); renderSessions(); renderHero();
+    renderTotals(); renderSessions(); renderHero();
   }catch(e){}
 }
 
@@ -412,13 +412,13 @@ function connectStream(){
 }
 
 async function pollLive(){
-  if (streamOk) return renderHero();                            // le flux marche : on rafraîchit l'affichage (compteurs, âge)
+  if (streamOk) return renderHero();                            // the stream works: refresh the display (counters, age)
   try{ const d = await (await fetch('/api/live')).json(); live = d.live; trace = d.trace || trace; renderHero(); }
-  catch(e){ $('pstate').textContent = 'Serveur injoignable'; $('pdot').className = 'dot off'; }
+  catch(e){ $('pstate').textContent = 'Server unreachable'; $('pdot').className = 'dot off'; }
 }
 
 // ---------------------------------------------------------------- interactions
-document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { period = b.dataset.p; try { localStorage.setItem('motionx-period', period); } catch {} renderCumul(); });
+document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { period = b.dataset.p; try { localStorage.setItem('motionx-period', period); } catch {} renderTotals(); });
 document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem('motionx-view', view); } catch {} renderSessions(); });
 $('more').onclick = () => { shown += 25; renderSessions(); };
 

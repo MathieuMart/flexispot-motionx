@@ -1,7 +1,7 @@
 import ActivityKit
 import Foundation
 
-/// Live Activity d'une séance de tapis (écran verrouillé + Dynamic Island).
+/// Live Activity for a treadmill session (Lock Screen + Dynamic Island).
 struct WalkActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
         var speedKmh: Double
@@ -10,9 +10,9 @@ struct WalkActivityAttributes: ActivityAttributes {
         var kcal: Int
         var walkS: Int
         var stateLabel: String
-        /// Bande en mouvement : le chrono avance tout seul, même sans mise à jour de l'app.
+        /// Belt is moving: the timer ticks on its own, even without an update from the app.
         var moving: Bool
-        /// Début virtuel du chrono de marche (= maintenant − temps de marche) pour Text(timerInterval:).
+        /// Virtual start of the walking timer (= now − walking time) for Text(timerInterval:).
         var walkTimerStart: Date
         var updatedAt: Date
         var ended: Bool

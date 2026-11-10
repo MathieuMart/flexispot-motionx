@@ -1,29 +1,29 @@
 /*
- *  MotionX (FlexiSpot WP01) — v3.0 "boîtier fermé"
+ *  MotionX (FlexiSpot WP01) — v3.0 "closed enclosure"
  *  ------------------------------------------------
- *  Carte : ESP32 Dev Module (ESP32-WROOM-32).  Outils > Partition Scheme : "Default 4MB with spiffs" (indispensable pour l'OTA).
- *  Dossier du croquis : motionx_v3/  contenant motionx_v3.ino ET page.h
+ *  Board: ESP32 Dev Module (ESP32-WROOM-32).  Tools > Partition Scheme: "Default 4MB with spiffs" (required for OTA).
+ *  Sketch folder: motionx_v3/  containing motionx_v3.ino AND page.h
  *
- *  Fonctions (mêmes que la v2.1) :
- *    - décodage du bus TRX sur G34, détection des séances, stockage en flash, envoi HTTP au serveur, temps réel UDP.
- *  Ajouts pour fonctionner sans accès physique :
- *    - MISE À JOUR PAR WI-FI : page web > "Mise à jour" > fichier .bin. Si le nouveau firmware plante ou devient
- *      injoignable dans sa première minute, l'ESP32 revient automatiquement à l'ancien (rollback).
- *    - WI-FI RECONFIGURABLE : identifiants modifiables depuis la page. Si le réseau reste introuvable 90 s,
- *      l'ESP32 ouvre son propre Wi-Fi de secours "MotionX-Setup" (mot de passe = ADMIN_PASS), page http://192.168.4.1
- *    - CHIEN DE GARDE : redémarrage automatique si la boucle principale se fige plus de 30 s.
- *    - MODE SANS ÉCHEC : après 5 plantages consécutifs, seuls le Wi-Fi, la page et la mise à jour restent actifs.
- *    - DIAGNOSTIC À DISTANCE : journal (/api/log), cause du dernier redémarrage, mémoire, qualité du décodage.
- *    - Stockage auto-nettoyé (nombre de séances et espace libre), séances vides ignorées, redémarrage préventif hebdomadaire.
+ *  Features (same as v2.1):
+ *    - decoding of the TRX bus on G34, session detection, flash storage, HTTP upload to the server, real-time UDP.
+ *  Additions to work without physical access:
+ *    - UPDATE OVER WI-FI: web page > "Firmware update" > .bin file. If the new firmware crashes or becomes
+ *      unreachable within its first minute, the ESP32 automatically reverts to the previous one (rollback).
+ *    - RECONFIGURABLE WI-FI: credentials can be changed from the page. If the network cannot be found for 90 s,
+ *      the ESP32 opens its own fallback Wi-Fi "MotionX-Setup" (password = ADMIN_PASS), page http://192.168.4.1
+ *    - WATCHDOG: automatic reboot if the main loop freezes for more than 30 s.
+ *    - SAFE MODE: after 5 consecutive crashes, only the Wi-Fi, the page and the update remain active.
+ *    - REMOTE DIAGNOSTICS: log (/api/log), cause of the last reboot, memory, decoding quality.
+ *    - Self-cleaning storage (number of sessions and free space), empty sessions ignored, weekly preventive reboot.
  *
- *  Les actions sensibles (réglages, mise à jour, redémarrage) demandent l'identifiant "admin" et ADMIN_PASS.
+ *  Sensitive actions (settings, update, reboot) require the "admin" user and ADMIN_PASS.
  *
- *  Câblage :  TRX (fil central J1) ──[2,2 kΩ]──┬── G34        5 V tapis (J5-V) ── V5/VIN       GND tapis ── GND
- *                                             └──[8,8 à 10 kΩ]── GND
+ *  Wiring:    TRX (center wire J1) ──[2.2 kΩ]──┬── G34        treadmill 5 V (J5-V) ── V5/VIN       treadmill GND ── GND
+ *                                             └──[8.8 to 10 kΩ]── GND
  *
- *  Protocole TRX : 1 bit = niveau bas 0,5 ms (0) ou 1,5 ms (1) + 1,5 ms haut ; trame 48 bits MSB first :
- *      EB 90 <état> <vitesse×10> 00 <somme & 0xFF>   toutes les 120 ms
- *      état : 00 initialisation, 01 veille, 02 compte à rebours, 03 en marche, 05 décélération/arrêt
+ *  TRX protocol: 1 bit = low level for 0.5 ms (0) or 1.5 ms (1) + 1.5 ms high; 48-bit frame, MSB first:
+ *      EB 90 <state> <speed×10> 00 <sum & 0xFF>   every 120 ms
+ *      state: 00 initializing, 01 standby, 02 countdown, 03 walking, 05 decelerating/stopping
  */
 #include <WiFi.h>
 #include <WebServer.h>
@@ -40,26 +40,26 @@
 #include <esp_ota_ops.h>
 #include "page.h"
 
-// ============================================================ CONFIGURATION (valeurs de départ, modifiables ensuite par la page web)
+// ============================================================ CONFIGURATION (initial values, can be changed later from the web page)
 const char* DEFAULT_WIFI_SSID = "YOUR_WIFI_SSID";
 const char* DEFAULT_WIFI_PASS = "YOUR_WIFI_PASSWORD";
 const char* DEFAULT_SERVER    = "http://192.168.1.10:3000";
 const char* DEVICE_NAME       = "motionx";            // http://motionx.local
 const char* ADMIN_USER        = "admin";
-const char* ADMIN_PASS        = "change-me-1234";    // 8 caractères minimum : sert aussi de mot de passe au Wi-Fi de secours
+const char* ADMIN_PASS        = "change-me-1234";    // 8 characters minimum: also used as the fallback Wi-Fi password
 const char* AP_SSID           = "MotionX-Setup";
 
-const uint32_t KEEP_SESSIONS  = 200;                  // nombre maximal de séances gardées en flash
-const uint32_t MIN_FREE_BYTES = 96 * 1024;            // en dessous, les plus anciennes séances sont effacées
-const float    MIN_SESSION_M  = 1.0;                  // une séance plus courte (start puis stop) n'est pas enregistrée
+const uint32_t KEEP_SESSIONS  = 200;                  // maximum number of sessions kept in flash
+const uint32_t MIN_FREE_BYTES = 96 * 1024;            // below this, the oldest sessions are deleted
+const float    MIN_SESSION_M  = 1.0;                  // a shorter session (start then stop) is not saved
 
-#define SIMULATION 0            // 1 = trames factices sur G25 (fil G25 -> G34), pour tester sans le tapis
+#define SIMULATION 0            // 1 = fake frames on G25 (wire G25 -> G34), to test without the treadmill
 #define FW_VERSION "3.0"
 
-// Avec cette fonction, un firmware reçu par Wi-Fi n'est déclaré bon qu'après avoir prouvé qu'il tourne (voir loop).
+// With this function, a firmware received over Wi-Fi is only marked valid once it has proven that it runs (see loop).
 extern "C" bool verifyRollbackLater() { return true; }
 
-// ============================================================ DÉCODEUR TRX (inchangé depuis la v1.3)
+// ============================================================ TRX DECODER (unchanged since v1.3)
 const int TRX_PIN = 34;
 const int SIM_PIN = 25;
 const uint32_t FILTER_US  = 200;
@@ -91,7 +91,7 @@ uint64_t bitAcc = 0;     uint8_t  nBits = 0;
 uint32_t framesOk = 0, framesBad = 0;
 bool     showRaw = false;
 
-// ============================================================ ÉTAT COURANT ET SÉANCE
+// ============================================================ CURRENT STATE AND SESSION
 uint8_t  curState = 0xFF, curSpeed10 = 0;
 uint32_t lastFrameMs = 0;
 bool     liveForce = false;
@@ -105,7 +105,7 @@ time_t   sesStartEpoch = 0;
 double   sesDistM = 0;
 uint8_t  sesMax10 = 0;
 
-// ============================================================ RÉSEAU, STOCKAGE, SURVEILLANCE
+// ============================================================ NETWORK, STORAGE, MONITORING
 Preferences prefs;
 WebServer   web(80);
 WiFiUDP     udp;
@@ -121,13 +121,13 @@ bool        mdnsStarted = false, fsOk = false, apActive = false, safeMode = fals
 bool        wifiWas = false, otaAuth = false, otaOk = false, otaValidated = false, bootsCleared = false, rebootPending = false;
 uint32_t    wifiLostMs = 0, wifiUpMs = 0, lastWifiRetryMs = 0, rebootAtMs = 0;
 uint32_t    bootCount = 0, crashTotal = 0;
-const char* resetText = "inconnu";
+const char* resetText = "unknown";
 
-volatile uint32_t loopBeatMs = 0;                 // mis à jour à chaque tour de loop(), surveillé par le chien de garde
-RTC_NOINIT_ATTR uint32_t wdtMagic;                // survit à un redémarrage logiciel : marque un redémarrage par le chien de garde
+volatile uint32_t loopBeatMs = 0;                 // updated on every loop() iteration, monitored by the watchdog
+RTC_NOINIT_ATTR uint32_t wdtMagic;                // survives a software reboot: marks a reboot triggered by the watchdog
 const uint32_t WDT_MAGIC = 0xD06F00D5;
 
-// ------------------------------------------------------------ journal consultable à distance (/api/log)
+// ------------------------------------------------------------ log readable remotely (/api/log)
 const size_t LOG_SIZE = 6000;
 char   logBuf[LOG_SIZE];
 size_t logHead = 0;   bool logWrapped = false;
@@ -148,19 +148,19 @@ void logMsg(const char* fmt, ...) {
 
 const char* stateName(uint8_t s) {
   switch (s) {
-    case 0x00: return "initialisation";
-    case 0x01: return "veille";
-    case 0x02: return "compte a rebours";
-    case 0x03: return "en marche";
-    case 0x05: return "deceleration";
-    default:   return "inconnu";
+    case 0x00: return "initializing";
+    case 0x01: return "standby";
+    case 0x02: return "countdown";
+    case 0x03: return "walking";
+    case 0x05: return "decelerating";
+    default:   return "unknown";
   }
 }
 
 bool timeOk() { return time(nullptr) > 1700000000; }
 void sessionPath(char* out, size_t n, uint32_t id) { snprintf(out, n, "/s/%06u.json", (unsigned)id); }
 
-void jsonEsc(const char* in, char* out, size_t n) {       // échappe " et \ pour les chaînes mises dans du JSON
+void jsonEsc(const char* in, char* out, size_t n) {       // escapes " and \ for strings put into JSON
   size_t o = 0;
   for (; *in && o + 2 < n; in++) {
     if (*in == '"' || *in == '\\') out[o++] = '\\';
@@ -169,8 +169,8 @@ void jsonEsc(const char* in, char* out, size_t n) {       // échappe " et \ pou
   out[o] = 0;
 }
 
-// ============================================================ SÉANCES
-void pruneStorage() {                 // limite le nombre de séances et garde de l'espace libre
+// ============================================================ SESSIONS
+void pruneStorage() {                 // limits the number of sessions and keeps some free space
   if (!fsOk) return;
   char path[24];
   uint32_t before = oldestId;
@@ -180,14 +180,14 @@ void pruneStorage() {                 // limite le nombre de séances et garde d
   }
   if (oldestId != before) {
     prefs.putUInt("oldest", oldestId);
-    logMsg("Stockage : seances #%u a #%u effacees pour faire de la place", (unsigned)before, (unsigned)(oldestId - 1));
+    logMsg("Storage: sessions #%u to #%u deleted to free up space", (unsigned)before, (unsigned)(oldestId - 1));
   }
 }
 
 void writeSession(const char* path, uint32_t id, uint32_t endMs, const char* reason) {
   if (!fsOk) return;
   File f = LittleFS.open(path, "w");
-  if (!f) { logMsg("!!! ecriture impossible : %s", path); return; }
+  if (!f) { logMsg("!!! cannot write: %s", path); return; }
   time_t startEpoch = sesStartEpoch;
   if (!startEpoch && timeOk()) startEpoch = time(nullptr) - (time_t)((millis() - sesStartMs) / 1000);
   float avg = sesWalkMs ? (float)((sesDistM / 1000.0) / (sesWalkMs / 3600000.0)) : 0;
@@ -213,13 +213,13 @@ void startSession(uint32_t nowMs) {
   nEvents = 0; evTrunc = false; lastCheckpointMs = nowMs;
   sesStartEpoch = timeOk() ? time(nullptr) : 0;
   udpDue = true;
-  logMsg(">>> debut de seance #%u", (unsigned)nextId);
+  logMsg(">>> session #%u started", (unsigned)nextId);
 }
 
 void endSession(uint32_t endMs, const char* reason) {
   inSession = false; liveForce = true; udpDue = true; lastSessionEndMs = millis();
   if (fsOk) LittleFS.remove("/cur.json");
-  if (sesDistM < MIN_SESSION_M) { logMsg("<<< seance vide ignoree (%s, %.1f m)", reason, sesDistM); return; }
+  if (sesDistM < MIN_SESSION_M) { logMsg("<<< empty session ignored (%s, %.1f m)", reason, sesDistM); return; }
   char path[24];
   uint32_t id = nextId;
   sessionPath(path, sizeof path, id);
@@ -227,11 +227,11 @@ void endSession(uint32_t endMs, const char* reason) {
   nextId++; prefs.putUInt("nextId", nextId);
   pruneStorage();
   uploadHoldMs = 0;
-  logMsg("<<< fin de seance #%u (%s) : %us, marche %us, %.0f m, max %.1f km/h, %u evenements",
+  logMsg("<<< session #%u ended (%s): %us, walking %us, %.0f m, max %.1f km/h, %u events",
          (unsigned)id, reason, (unsigned)((endMs - sesStartMs) / 1000), (unsigned)(sesWalkMs / 1000), sesDistM, sesMax10 / 10.0, (unsigned)nEvents);
 }
 
-// ------------------------------------------------------------ une trame complète vient d'être reçue
+// ------------------------------------------------------------ a complete frame has just been received
 void handleFrame(uint64_t bits, uint8_t n) {
   if (n != 48) { framesBad++; return; }
   uint8_t b[6];
@@ -240,7 +240,7 @@ void handleFrame(uint64_t bits, uint8_t n) {
   uint8_t state = b[2], spd = b[3];
   bool known = (state == 0x00 || state == 0x01 || state == 0x02 || state == 0x03 || state == 0x05);
   bool ok = (b[0] == 0xEB && b[1] == 0x90 && sum == b[5] && known && spd <= MAX_SPEED10 && b[4] == 0x00);
-  if (showRaw) Serial.printf("[%8.3fs] %02X %02X %02X %02X %02X %02X  %s\n", millis() / 1000.0, b[0], b[1], b[2], b[3], b[4], b[5], ok ? "OK" : "REJETEE");
+  if (showRaw) Serial.printf("[%8.3fs] %02X %02X %02X %02X %02X %02X  %s\n", millis() / 1000.0, b[0], b[1], b[2], b[3], b[4], b[5], ok ? "OK" : "REJECTED");
   if (!ok) { framesBad++; return; }
   framesOk++;
 
@@ -259,7 +259,7 @@ void handleFrame(uint64_t bits, uint8_t n) {
   if (state != curState || spd != curSpeed10) {
     if (state != curState) {
       liveForce = true;
-      logMsg("etat : %s", stateName(state));
+      logMsg("state: %s", stateName(state));
     }
     udpDue = true;
     curState = state; curSpeed10 = spd;
@@ -272,7 +272,7 @@ void handleFrame(uint64_t bits, uint8_t n) {
   if (inSession && (state == 0x01 || state == 0x00)) endSession(nowMs, "stop");
 }
 
-// ------------------------------------------------------------ impulsions -> bits (filtre intégrateur)
+// ------------------------------------------------------------ pulses -> bits (integrating filter)
 void feedPulse(uint8_t level, uint32_t dur) {
   if (level == 0) {
     if (nBits < 64) { bitAcc = (bitAcc << 1) | (dur >= BIT_ONE_US ? 1 : 0); nBits++; }
@@ -329,7 +329,7 @@ void processEdges() {
   }
 }
 
-// ------------------------------------------------------------ simulateur (optionnel)
+// ------------------------------------------------------------ simulator (optional)
 #if SIMULATION
 void simSendFrame(uint8_t state, uint8_t speed10) {
   uint8_t b[6] = {0xEB, 0x90, state, speed10, 0x00, 0};
@@ -356,7 +356,7 @@ void simStep() {
 }
 #endif
 
-// ============================================================ ÉTAT EN JSON (page web, UDP, HTTP)
+// ============================================================ STATUS AS JSON (web page, UDP, HTTP)
 String statusJson() {
   static char buf[1200];
   char ssidE[80], srvE[170];
@@ -377,7 +377,7 @@ String statusJson() {
     "\"wifi\":%s,\"ssid\":\"%s\",\"ip\":\"%s\",\"rssi\":%d,\"ap\":%s,\"server\":\"%s\",\"udp_sent\":%u,"
     "\"heap\":%u,\"heap_min\":%u,\"reset\":\"%s\",\"crashes\":%u,\"safe_mode\":%s}",
     DEVICE_NAME, FW_VERSION, (unsigned long)(timeOk() ? time(nullptr) : 0), (unsigned)(nowMs / 1000),
-    signal ? "true" : "false", (unsigned)(curState == 0xFF ? 0 : curState), signal ? stateName(curState) : "aucun signal", signal ? curSpeed10 / 10.0 : 0.0,
+    signal ? "true" : "false", (unsigned)(curState == 0xFF ? 0 : curState), signal ? stateName(curState) : "no signal", signal ? curSpeed10 / 10.0 : 0.0,
     inSession ? "true" : "false", (unsigned)(inSession ? nextId : 0), (unsigned)(inSession ? nowMs - sesStartMs : 0),
     (unsigned)(inSession ? (nowMs - sesStartMs) / 1000 : 0), (unsigned)(inSession ? sesWalkMs / 1000 : 0), inSession ? sesDistM : 0.0,
     (unsigned)framesOk, (unsigned)framesBad, (unsigned)edgeOverflow,
@@ -387,7 +387,7 @@ String statusJson() {
   return String(buf);
 }
 
-// ============================================================ TEMPS RÉEL : paquets UDP vers le serveur
+// ============================================================ REAL TIME: UDP packets to the server
 void resolveServer() {
   udpReady = false;
   if (WiFi.status() != WL_CONNECTED) return;
@@ -401,9 +401,9 @@ void resolveServer() {
   uint16_t port = 80;
   if (h[i] == ':') port = (uint16_t)atoi(h + i + 1);
   if (!host[0] || !port) return;
-  if (!udpIp.fromString(host) && WiFi.hostByName(host, udpIp) != 1) { logMsg("Temps reel : nom de serveur introuvable (%s)", host); return; }
+  if (!udpIp.fromString(host) && WiFi.hostByName(host, udpIp) != 1) { logMsg("Real time: server name not found (%s)", host); return; }
   udpPort = port; udpReady = true;
-  logMsg("Temps reel : UDP vers %s:%u", udpIp.toString().c_str(), (unsigned)udpPort);
+  logMsg("Real time: UDP to %s:%u", udpIp.toString().c_str(), (unsigned)udpPort);
 }
 
 void sendUdp() {
@@ -420,13 +420,13 @@ void sendUdp() {
   }
 }
 
-// ============================================================ PAGE WEB ET API LOCALE
+// ============================================================ WEB PAGE AND LOCAL API
 void jsonHeaders() {
   web.sendHeader("Access-Control-Allow-Origin", "*");
   web.sendHeader("Cache-Control", "no-store");
 }
 
-bool admin() {                        // demande l'identifiant et le mot de passe pour les actions sensibles
+bool admin() {                        // asks for the user name and password for sensitive actions
   if (web.authenticate(ADMIN_USER, ADMIN_PASS)) return true;
   web.requestAuthentication();
   return false;
@@ -436,7 +436,7 @@ void handleRoot()   { web.send_P(200, "text/html; charset=utf-8", INDEX_HTML); }
 void handleStatus() { jsonHeaders(); web.send(200, "application/json", statusJson()); }
 void handleAuth()   { if (!admin()) return; jsonHeaders(); web.send(200, "application/json", "{\"ok\":true}"); }
 
-void handleSessions() {              // /api/sessions?limit=30 : les plus récentes d'abord
+void handleSessions() {              // /api/sessions?limit=30 : most recent first
   static char buf[1025];
   char path[24];
   uint32_t limit = web.hasArg("limit") ? (uint32_t)web.arg("limit").toInt() : 30;
@@ -467,7 +467,7 @@ void handleSessions() {              // /api/sessions?limit=30 : les plus récen
   web.sendContent("");
 }
 
-void handleLog() {                   // journal des événements depuis le démarrage (texte)
+void handleLog() {                   // event log since boot (text)
   web.sendHeader("Cache-Control", "no-store");
   web.setContentLength(CONTENT_LENGTH_UNKNOWN);
   web.send(200, "text/plain; charset=utf-8", "");
@@ -484,12 +484,12 @@ void handleConfig() {                // /api/config  server=...   resend=1   raw
     while (serverUrl.endsWith("/")) serverUrl.remove(serverUrl.length() - 1);
     prefs.putString("server", serverUrl);
     uploadHoldMs = 0; liveHoldMs = 0; liveForce = true;
-    logMsg("Serveur : %s", serverUrl.c_str());
+    logMsg("Server: %s", serverUrl.c_str());
     resolveServer();
   }
   if (web.hasArg("resend")) {
     lastSent = 0; prefs.putUInt("lastSent", 0); uploadHoldMs = 0;
-    logMsg("Renvoi de toutes les seances demande");
+    logMsg("Resend of all sessions requested");
   }
   jsonHeaders();
   web.send(200, "application/json", statusJson());
@@ -497,12 +497,12 @@ void handleConfig() {                // /api/config  server=...   resend=1   raw
 
 void handleWifi() {                  // /api/wifi  ssid=...&pass=...
   if (!admin()) return;
-  if (!web.hasArg("ssid") || web.arg("ssid").length() == 0) { web.send(400, "text/plain", "ssid manquant"); return; }
+  if (!web.hasArg("ssid") || web.arg("ssid").length() == 0) { web.send(400, "text/plain", "missing ssid"); return; }
   wifiSsid = web.arg("ssid");
   wifiPass = web.arg("pass");
   prefs.putString("ssid", wifiSsid);
   prefs.putString("pass", wifiPass);
-  logMsg("Nouveau reseau Wi-Fi enregistre : %s", wifiSsid.c_str());
+  logMsg("New Wi-Fi network saved: %s", wifiSsid.c_str());
   jsonHeaders();
   web.send(200, "application/json", "{\"ok\":true}");
   delay(300);
@@ -511,16 +511,16 @@ void handleWifi() {                  // /api/wifi  ssid=...&pass=...
   wifiLostMs = millis(); lastWifiRetryMs = millis();
 }
 
-void handleReboot() {                // /api/reboot   (normal=1 : quitte le mode sans échec)
+void handleReboot() {                // /api/reboot   (normal=1: leaves safe mode)
   if (!admin()) return;
   if (web.hasArg("normal")) prefs.putUInt("boots", 0);
   jsonHeaders();
   web.send(200, "application/json", "{\"ok\":true}");
-  logMsg("Redemarrage demande depuis la page");
+  logMsg("Reboot requested from the page");
   rebootPending = true; rebootAtMs = millis();
 }
 
-// ------------------------------------------------------------ mise à jour du firmware par la page (/update)
+// ------------------------------------------------------------ firmware update from the page (/update)
 void handleUpdateUpload() {
   HTTPUpload& up = web.upload();
   loopBeatMs = millis();
@@ -528,19 +528,19 @@ void handleUpdateUpload() {
     otaOk = false;
     otaAuth = web.authenticate(ADMIN_USER, ADMIN_PASS);
     if (!otaAuth) return;
-    if (inSession) endSession(millis(), "mise_a_jour");
-    logMsg("Mise a jour : reception de %s", up.filename.c_str());
-    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) logMsg("Mise a jour impossible : %s", Update.errorString());
+    if (inSession) endSession(millis(), "update");
+    logMsg("Update: receiving %s", up.filename.c_str());
+    if (!Update.begin(UPDATE_SIZE_UNKNOWN)) logMsg("Update cannot start: %s", Update.errorString());
   } else if (up.status == UPLOAD_FILE_WRITE) {
     if (otaAuth && Update.isRunning() && Update.write(up.buf, up.currentSize) != up.currentSize)
-      logMsg("Mise a jour : erreur d'ecriture : %s", Update.errorString());
+      logMsg("Update: write error: %s", Update.errorString());
   } else if (up.status == UPLOAD_FILE_END) {
     if (!otaAuth) return;
-    if (Update.end(true)) { otaOk = true; logMsg("Mise a jour : %u octets ecrits, redemarrage", (unsigned)up.totalSize); }
-    else logMsg("Mise a jour refusee : %s", Update.errorString());
+    if (Update.end(true)) { otaOk = true; logMsg("Update: %u bytes written, rebooting", (unsigned)up.totalSize); }
+    else logMsg("Update rejected: %s", Update.errorString());
   } else if (up.status == UPLOAD_FILE_ABORTED) {
     if (otaAuth) Update.abort();
-    logMsg("Mise a jour interrompue");
+    logMsg("Update aborted");
   }
 }
 
@@ -548,13 +548,13 @@ void handleUpdateDone() {
   if (!admin()) return;
   web.sendHeader("Connection", "close");
   web.send(otaOk ? 200 : 500, "text/plain; charset=utf-8",
-           otaOk ? "Mise a jour recue. Redemarrage en cours, la page se rechargera dans 20 secondes."
-                 : "Echec de la mise a jour : fichier invalide ou trop gros. Detail dans /api/log.");
+           otaOk ? "Update received. Rebooting, the page will reload in 20 seconds."
+                 : "Update failed: invalid or oversized file. Details in /api/log.");
   if (otaOk) { rebootPending = true; rebootAtMs = millis(); }
 }
 
-// ============================================================ ENVOIS HTTP VERS LE SERVEUR
-void tryUpload() {                   // une séance en attente par appel, uniquement hors séance
+// ============================================================ HTTP UPLOADS TO THE SERVER
+void tryUpload() {                   // one pending session per call, only outside a session
   if (!fsOk || WiFi.status() != WL_CONNECTED || serverUrl.length() == 0) return;
   if (lastSent + 1 >= nextId) return;
   if (uploadHoldMs && millis() - uploadHoldStart < uploadHoldMs) return;
@@ -576,16 +576,16 @@ void tryUpload() {                   // une séance en attente par appel, unique
   http.end();
   if (code >= 200 && code < 300) {
     lastSent = id; prefs.putUInt("lastSent", lastSent);
-    logMsg("Seance #%u envoyee au serveur (HTTP %d)", (unsigned)id, code);
+    logMsg("Session #%u sent to the server (HTTP %d)", (unsigned)id, code);
   } else {
     static int lastCode = 0;
-    if (code != lastCode) logMsg("Envoi de la seance #%u impossible (code %d) : nouvel essai toutes les 30 s", (unsigned)id, code);
+    if (code != lastCode) logMsg("Cannot send session #%u (code %d): retrying every 30 s", (unsigned)id, code);
     lastCode = code;
     uploadHoldStart = millis(); uploadHoldMs = 30000;
   }
 }
 
-void postLive() {                    // secours du temps réel UDP
+void postLive() {                    // fallback for the real-time UDP
   if (WiFi.status() != WL_CONNECTED || serverUrl.length() == 0) return;
   uint32_t nowMs = millis();
   if (liveHoldMs && nowMs - liveHoldStart < liveHoldMs) { liveForce = false; return; }
@@ -604,20 +604,20 @@ void postLive() {                    // secours du temps réel UDP
   if (code < 200 || code >= 300) { liveHoldStart = millis(); liveHoldMs = 30000; }
 }
 
-// ============================================================ WI-FI : connexion, reconnexion, point d'accès de secours
+// ============================================================ WI-FI: connection, reconnection, fallback access point
 void startAp() {
-  WiFi.setAutoReconnect(false);                       // les tentatives automatiques perturbent le point d'accès
+  WiFi.setAutoReconnect(false);                       // automatic retries disturb the access point
   WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(AP_SSID, ADMIN_PASS);
   apActive = true;
-  logMsg("Wi-Fi de secours actif : reseau \"%s\", page http://192.168.4.1", AP_SSID);
+  logMsg("Fallback Wi-Fi active: network \"%s\", page http://192.168.4.1", AP_SSID);
 }
 
 void stopAp() {
   WiFi.softAPdisconnect(true);
   WiFi.setAutoReconnect(true);
   apActive = false;
-  logMsg("Wi-Fi de secours arrete");
+  logMsg("Fallback Wi-Fi stopped");
 }
 
 void wifiTick() {
@@ -625,18 +625,18 @@ void wifiTick() {
   bool is = (WiFi.status() == WL_CONNECTED);
   if (is && !wifiWas) {
     wifiUpMs = nowMs;
-    logMsg("Wi-Fi connecte a \"%s\" : http://%s  (ou http://%s.local), %d dBm", wifiSsid.c_str(), WiFi.localIP().toString().c_str(), DEVICE_NAME, (int)WiFi.RSSI());
+    logMsg("Wi-Fi connected to \"%s\": http://%s  (or http://%s.local), %d dBm", wifiSsid.c_str(), WiFi.localIP().toString().c_str(), DEVICE_NAME, (int)WiFi.RSSI());
     if (!mdnsStarted && MDNS.begin(DEVICE_NAME)) { MDNS.addService("http", "tcp", 80); mdnsStarted = true; }
     configTime(0, 0, "pool.ntp.org", "time.google.com");
     uploadHoldStart = nowMs; uploadHoldMs = 2000; liveForce = true; liveHoldMs = 0;
     resolveServer();
   }
-  if (!is && wifiWas) { wifiLostMs = nowMs; lastWifiRetryMs = nowMs; udpReady = false; logMsg("Wi-Fi perdu"); }
+  if (!is && wifiWas) { wifiLostMs = nowMs; lastWifiRetryMs = nowMs; udpReady = false; logMsg("Wi-Fi lost"); }
   wifiWas = is;
 
   if (!is) {
     if (!apActive && nowMs - wifiLostMs > 90000) startAp();
-    uint32_t every = apActive ? 120000 : 30000;       // en mode secours, on laisse du temps pour utiliser la page
+    uint32_t every = apActive ? 120000 : 30000;       // in fallback mode, leave time to use the page
     if (nowMs - lastWifiRetryMs > every) {
       lastWifiRetryMs = nowMs;
       WiFi.disconnect();
@@ -645,22 +645,22 @@ void wifiTick() {
   } else if (apActive && nowMs - wifiUpMs > 60000) stopAp();
 }
 
-// ============================================================ SURVEILLANCE
-void watchdogCheck() {               // appelé toutes les 5 s par un minuteur indépendant de loop()
+// ============================================================ MONITORING
+void watchdogCheck() {               // called every 5 s by a timer independent of loop()
   if (millis() - loopBeatMs > 30000) { wdtMagic = WDT_MAGIC; ESP.restart(); }
 }
 
 const char* resetReasonText(esp_reset_reason_t r) {
   switch (r) {
-    case ESP_RST_POWERON:  return "mise sous tension";
-    case ESP_RST_SW:       return "redemarrage logiciel";
-    case ESP_RST_PANIC:    return "plantage";
+    case ESP_RST_POWERON:  return "power-on";
+    case ESP_RST_SW:       return "software reboot";
+    case ESP_RST_PANIC:    return "crash";
     case ESP_RST_INT_WDT:
     case ESP_RST_TASK_WDT:
-    case ESP_RST_WDT:      return "blocage (chien de garde systeme)";
-    case ESP_RST_BROWNOUT: return "chute de tension d'alimentation";
-    case ESP_RST_DEEPSLEEP: return "reveil";
-    default:               return "autre";
+    case ESP_RST_WDT:      return "hang (system watchdog)";
+    case ESP_RST_BROWNOUT: return "power supply brownout";
+    case ESP_RST_DEEPSLEEP: return "wake-up";
+    default:               return "other";
   }
 }
 
@@ -671,11 +671,11 @@ void setup() {
   Serial.println();
   loopBeatMs = millis();
 
-  // ---- cause du redémarrage et compteur de plantages consécutifs
+  // ---- reboot cause and consecutive crash counter
   esp_reset_reason_t rr = esp_reset_reason();
   bool byWatchdog = (rr == ESP_RST_SW && wdtMagic == WDT_MAGIC);
   wdtMagic = 0;
-  resetText = byWatchdog ? "blocage de la boucle (chien de garde)" : resetReasonText(rr);
+  resetText = byWatchdog ? "main loop hang (watchdog)" : resetReasonText(rr);
   bool abnormal = byWatchdog || rr == ESP_RST_PANIC || rr == ESP_RST_INT_WDT || rr == ESP_RST_TASK_WDT || rr == ESP_RST_WDT || rr == ESP_RST_BROWNOUT;
 
   prefs.begin("motionx", false);
@@ -692,30 +692,30 @@ void setup() {
   wifiSsid  = prefs.getString("ssid", DEFAULT_WIFI_SSID);
   wifiPass  = prefs.getString("pass", DEFAULT_WIFI_PASS);
 
-  logMsg("=== MotionX v" FW_VERSION " === demarrage : %s (plantages consecutifs %u, total %u)", resetText, (unsigned)bootCount, (unsigned)crashTotal);
-  if (safeMode) logMsg("!!! MODE SANS ECHEC : decodage et stockage desactives. Mets a jour le firmware ou redemarre en mode normal depuis la page.");
+  logMsg("=== MotionX v" FW_VERSION " === boot: %s (consecutive crashes %u, total %u)", resetText, (unsigned)bootCount, (unsigned)crashTotal);
+  if (safeMode) logMsg("!!! SAFE MODE: decoding and storage disabled. Update the firmware or reboot in normal mode from the page.");
 
   if (!safeMode) {
     pinMode(TRX_PIN, INPUT);
 #if SIMULATION
     pinMode(SIM_PIN, OUTPUT); digitalWrite(SIM_PIN, HIGH);
-    logMsg("MODE SIMULATION : relier G25 a G34");
+    logMsg("SIMULATION MODE: connect G25 to G34");
 #endif
     fsOk = LittleFS.begin(true);
-    if (!fsOk) logMsg("!!! stockage indisponible : les seances ne seront pas enregistrees");
+    if (!fsOk) logMsg("!!! storage unavailable: sessions will not be saved");
     else {
       if (!LittleFS.exists("/s")) LittleFS.mkdir("/s");
-      if (LittleFS.exists("/cur.json")) {             // séance interrompue par une coupure de courant
+      if (LittleFS.exists("/cur.json")) {             // session interrupted by a power cut
         char path[24];
         sessionPath(path, sizeof path, nextId);
         LittleFS.rename("/cur.json", path);
-        logMsg("Seance interrompue recuperee : #%u", (unsigned)nextId);
+        logMsg("Interrupted session recovered: #%u", (unsigned)nextId);
         nextId++; prefs.putUInt("nextId", nextId);
       }
       pruneStorage();
     }
-    if (nextId == oldestId) logMsg("Aucune seance en memoire | serveur %s", serverUrl.c_str());
-    else logMsg("Seances : #%u a #%u en memoire, envoyees jusqu'a #%u | serveur %s", (unsigned)oldestId, (unsigned)(nextId - 1), (unsigned)lastSent, serverUrl.c_str());
+    if (nextId == oldestId) logMsg("No session in memory | server %s", serverUrl.c_str());
+    else logMsg("Sessions: #%u to #%u in memory, sent up to #%u | server %s", (unsigned)oldestId, (unsigned)(nextId - 1), (unsigned)lastSent, serverUrl.c_str());
   }
 
   WiFi.mode(WIFI_STA);
@@ -723,7 +723,7 @@ void setup() {
   WiFi.setAutoReconnect(true);
   WiFi.begin(wifiSsid.c_str(), wifiPass.c_str());
   wifiLostMs = millis(); lastWifiRetryMs = millis();
-  logMsg("Connexion au Wi-Fi \"%s\"...", wifiSsid.c_str());
+  logMsg("Connecting to Wi-Fi \"%s\"...", wifiSsid.c_str());
 
   web.on("/", handleRoot);
   web.on("/api/status", handleStatus);
@@ -758,13 +758,13 @@ void loop() {
   bool wifiOk = (WiFi.status() == WL_CONNECTED);
   nowMs = millis();
 
-  // ---- un firmware reçu par Wi-Fi est validé seulement une fois joignable ; sinon l'ESP32 reviendra à l'ancien
+  // ---- a firmware received over Wi-Fi is validated only once reachable; otherwise the ESP32 will revert to the previous one
   if (!otaValidated && nowMs > 60000 && (apActive || (wifiOk && nowMs - wifiUpMs > 20000))) {
     otaValidated = true;
     esp_ota_mark_app_valid_cancel_rollback();
-    logMsg("Firmware v" FW_VERSION " valide (joignable depuis le reseau)");
+    logMsg("Firmware v" FW_VERSION " validated (reachable from the network)");
   }
-  // ---- trois minutes sans plantage : le compteur de plantages consécutifs repart de zéro
+  // ---- three minutes without a crash: the consecutive crash counter is reset to zero
   if (!bootsCleared && nowMs > 180000) {
     bootsCleared = true;
     if (bootCount && !safeMode) prefs.putUInt("boots", 0);
@@ -774,26 +774,26 @@ void loop() {
   if (safeMode) { delay(2); return; }
 
   processEdges();
-  if (inSession && nowMs - lastFrameMs > 3000) endSession(lastFrameMs, "signal_perdu");
+  if (inSession && nowMs - lastFrameMs > 3000) endSession(lastFrameMs, "signal_lost");
   if (inSession && nowMs - lastCheckpointMs > 60000) {
-    writeSession("/cur.json", nextId, nowMs, "interrompue");
+    writeSession("/cur.json", nextId, nowMs, "interrupted");
     lastCheckpointMs = nowMs;
   }
   sendUdp();
   if (!inSession) tryUpload();
   postLive();
 
-  // ---- redémarrage préventif : une semaine d'allumage continu, tapis au repos depuis 10 minutes, rien en attente
+  // ---- preventive reboot: one week of continuous uptime, treadmill idle for 10 minutes, nothing pending
   if (nowMs > 7UL * 24 * 3600 * 1000 && !inSession && curState != 0x02 && curState != 0x03 && curState != 0x05
       && nowMs - lastSessionEndMs > 600000 && lastSent + 1 >= nextId) {
-    logMsg("Redemarrage preventif hebdomadaire");
+    logMsg("Weekly preventive reboot");
     delay(200);
     ESP.restart();
   }
 
-  if (Serial.available()) {          // utile seulement tant que le câble USB est branché
+  if (Serial.available()) {          // only useful while the USB cable is plugged in
     char c = Serial.read();
-    if (c == 'r') { showRaw = !showRaw; Serial.printf("Affichage brut : %s\n", showRaw ? "ON" : "OFF"); }
+    if (c == 'r') { showRaw = !showRaw; Serial.printf("Raw display: %s\n", showRaw ? "ON" : "OFF"); }
     if (c == 's') Serial.println(statusJson().c_str());
   }
 }

@@ -1,8 +1,8 @@
 import AVFoundation
 
-/// Garde l'app éveillée écran verrouillé en jouant du silence (mode d'arrière-plan « audio »),
-/// pour que le flux temps réel continue d'alimenter la Live Activity pendant une séance.
-/// Mixé avec les autres sons : ta musique ou tes podcasts ne sont pas coupés.
+/// Keeps the app awake on the Lock Screen by playing silence ("audio" background mode),
+/// so that the real-time stream keeps feeding the Live Activity during a session.
+/// Mixed with other audio: your music or podcasts are not interrupted.
 @MainActor
 final class BackgroundKeeper {
     private var engine: AVAudioEngine?
@@ -37,7 +37,7 @@ final class BackgroundKeeper {
                                                               object: nil, queue: .main) { [weak self] note in
                 guard let raw = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
                       AVAudioSession.InterruptionType(rawValue: raw) == .ended else { return }
-                MainActor.assumeIsolated {          // après un appel téléphonique : on relance
+                MainActor.assumeIsolated {          // after a phone call: restart
                     self?.stop()
                     self?.start()
                 }

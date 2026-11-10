@@ -178,10 +178,10 @@
 				};
 			};
 			buildConfigurationList = AA000000000000000000000C /* Build configuration list for PBXProject "MotionX" */;
-			developmentRegion = fr;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				fr,
+				en,
 				Base,
 			);
 			mainGroup = AA0000000000000000000004;
@@ -300,9 +300,9 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MotionX;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "MotionX lit tes entraînements pour éviter d'enregistrer deux fois la même séance.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MotionX enregistre tes séances de tapis (marche, distance, pas, calories) dans Santé.";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "MotionX se connecte à ton serveur sur le réseau local pour afficher le tapis en direct.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "MotionX reads your workouts to avoid saving the same session twice.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MotionX saves your treadmill sessions (walking, distance, steps, calories) to Health.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "MotionX connects to your server on the local network to show the treadmill live.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -337,9 +337,9 @@
 				INFOPLIST_FILE = Config/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = MotionX;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "MotionX lit tes entraînements pour éviter d'enregistrer deux fois la même séance.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MotionX enregistre tes séances de tapis (marche, distance, pas, calories) dans Santé.";
-				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "MotionX se connecte à ton serveur sur le réseau local pour afficher le tapis en direct.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "MotionX reads your workouts to avoid saving the same session twice.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "MotionX saves your treadmill sessions (walking, distance, steps, calories) to Health.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "MotionX connects to your server on the local network to show the treadmill live.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

@@ -13,16 +13,16 @@ struct HistoryView: View {
                     if !model.history.loadedOnce || model.history.loading {
                         ProgressView()
                     } else if let err = model.history.error {
-                        ContentUnavailableView("Serveur injoignable", systemImage: "wifi.exclamationmark", description: Text(err))
+                        ContentUnavailableView("Server unreachable", systemImage: "wifi.exclamationmark", description: Text(err))
                     } else {
-                        ContentUnavailableView("Aucune séance", systemImage: "figure.walk",
-                                               description: Text("Tes séances apparaîtront ici dès que l'ESP32 les aura envoyées."))
+                        ContentUnavailableView("No sessions", systemImage: "figure.walk",
+                                               description: Text("Your sessions will appear here as soon as the ESP32 has sent them."))
                     }
                 } else {
                     list
                 }
             }
-            .navigationTitle("Historique")
+            .navigationTitle("History")
             .toolbar {
                 if model.health.isAuthorized {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -32,7 +32,7 @@ struct HistoryView: View {
                             if model.health.running { ProgressView() } else { Image(systemName: "heart.text.square") }
                         }
                         .disabled(model.health.running)
-                        .accessibilityLabel("Synchroniser avec Santé")
+                        .accessibilityLabel("Sync with Health")
                     }
                 }
             }
@@ -65,14 +65,14 @@ struct HistoryView: View {
         let week = model.history.totals(since: Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: .now))!)
         let days = model.history.daily(days: 7)
         return VStack(alignment: .leading, spacing: 12) {
-            Text("7 derniers jours").font(.headline)
+            Text("Last 7 days").font(.headline)
             HStack(spacing: 18) {
                 summaryValue(Fmt.distance(week.distanceM), "distance")
-                summaryValue(Fmt.int(week.steps), "pas")
-                summaryValue(Fmt.duration(week.walkS), "de marche")
+                summaryValue(Fmt.int(week.steps), "steps")
+                summaryValue(Fmt.duration(week.walkS), "walking")
             }
             Chart(days) { d in
-                BarMark(x: .value("Jour", d.day, unit: .day), y: .value("km", d.distanceM / 1000))
+                BarMark(x: .value("Day", d.day, unit: .day), y: .value("km", d.distanceM / 1000))
                     .foregroundStyle(Calendar.current.isDateInToday(d.day) ? Color.accentColor : Color.accentColor.opacity(0.5))
                     .cornerRadius(4)
             }
@@ -103,14 +103,14 @@ struct SessionRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(session.startDate.formatted(date: .omitted, time: .shortened))
                     .font(.headline.monospacedDigit())
-                Text("\(Fmt.hms(session.computed.walkS)) · \(Fmt.distance(session.computed.distanceM)) · \(Fmt.int(session.computed.steps)) pas")
+                Text("\(Fmt.hms(session.computed.walkS)) · \(Fmt.distance(session.computed.distanceM)) · \(Fmt.int(session.computed.steps)) steps")
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
             Spacer()
             Image(systemName: session.healthSynced == true ? "heart.fill" : "heart")
                 .foregroundStyle(session.healthSynced == true ? Color.pink : Color.secondary.opacity(0.5))
-                .accessibilityLabel(session.healthSynced == true ? "Dans Santé" : "Pas encore dans Santé")
+                .accessibilityLabel(session.healthSynced == true ? "In Health" : "Not in Health yet")
         }
         .padding(.vertical, 2)
     }
@@ -126,16 +126,16 @@ struct SessionDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    StatTile(title: "Marche", value: Fmt.hms(summary.computed.walkS), systemImage: "figure.walk", tint: .green)
-                    StatTile(title: "Durée totale", value: Fmt.hms(summary.durationS ?? summary.computed.walkS), systemImage: "stopwatch")
+                    StatTile(title: "Walking", value: Fmt.hms(summary.computed.walkS), systemImage: "figure.walk", tint: .green)
+                    StatTile(title: "Total duration", value: Fmt.hms(summary.durationS ?? summary.computed.walkS), systemImage: "stopwatch")
                     StatTile(title: "Distance", value: Fmt.distanceParts(summary.computed.distanceM).0, unit: Fmt.distanceParts(summary.computed.distanceM).1, systemImage: "map", tint: .blue)
-                    StatTile(title: "Pas ≈", value: Fmt.int(summary.computed.steps), systemImage: "shoeprints.fill", tint: .orange)
+                    StatTile(title: "Steps ≈", value: Fmt.int(summary.computed.steps), systemImage: "shoeprints.fill", tint: .orange)
                     StatTile(title: "Calories ≈", value: Fmt.int(summary.computed.kcal), unit: "kcal", systemImage: "flame.fill", tint: .red)
-                    StatTile(title: "Vitesse moy. / max", value: "\(Fmt.speed(avgSpeed)) / \(Fmt.speed(summary.maxKmh ?? 0))", unit: "km/h", systemImage: "speedometer", tint: .purple)
+                    StatTile(title: "Avg / max speed", value: "\(Fmt.speed(avgSpeed)) / \(Fmt.speed(summary.maxKmh ?? 0))", unit: "km/h", systemImage: "speedometer", tint: .purple)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Profil de vitesse").font(.headline)
+                    Text("Speed profile").font(.headline)
                     if let detail {
                         SpeedChart(points: detail.events, endMs: (detail.durationS ?? 0) * 1000)
                             .frame(height: 200)
@@ -147,15 +147,15 @@ struct SessionDetailView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Label(summary.healthSynced == true ? "Enregistrée dans Santé" : "Pas encore dans Santé",
+                    Label(summary.healthSynced == true ? "Saved to Health" : "Not in Health yet",
                           systemImage: summary.healthSynced == true ? "heart.fill" : "heart")
                         .foregroundStyle(summary.healthSynced == true ? .pink : .secondary)
                     if summary.startEstimated == true {
-                        Label("Heure de début estimée (l'ESP32 n'avait pas l'heure)", systemImage: "clock.badge.questionmark")
+                        Label("Estimated start time (the ESP32 did not have the time)", systemImage: "clock.badge.questionmark")
                             .foregroundStyle(.secondary)
                     }
                     if let end = summary.end {
-                        Label("Fin : \(endLabel(end)) · séance #\(summary.number)", systemImage: "flag.checkered")
+                        Label("End: \(endLabel(end)) · session #\(summary.number)", systemImage: "flag.checkered")
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -178,8 +178,10 @@ struct SessionDetailView: View {
 
     private func endLabel(_ raw: String) -> String {
         switch raw {
-        case "stop": return "arrêt normal"
-        case "signal_perdu": return "signal perdu"
+        case "stop": return "normal stop"
+        case "signal_lost", "signal_perdu": return "signal lost"
+        case "update", "mise_a_jour": return "update"
+        case "interrupted", "interrompue": return "interrupted"
         default: return raw.replacingOccurrences(of: "_", with: " ")
         }
     }

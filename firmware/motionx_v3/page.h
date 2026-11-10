@@ -1,9 +1,9 @@
-// Page web embarquée de l'ESP32 (http://motionx.local, http://<ip>, ou http://192.168.4.1 sur le Wi-Fi de secours)
+// Embedded web page of the ESP32 (http://motionx.local, http://<ip>, or http://192.168.4.1 on the fallback Wi-Fi)
 #pragma once
 #include <Arduino.h>
 
 const char INDEX_HTML[] PROGMEM = R"HTML(<!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MotionX</title>
 <style>
 :root{--bg:#f6f5f1;--fg:#1c2128;--mut:#667080;--card:#fff;--line:#d8d4ca;--acc:#1f6f5a;--warn:#b4541f;--warnbg:#fdf0e3}
@@ -24,67 +24,67 @@ small,.mut{color:var(--mut)}a{color:var(--acc)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 18px}.grid span{color:var(--mut);font-size:13px}.grid b{display:block;font-variant-numeric:tabular-nums}
 </style></head><body>
 <h1>MotionX <small id="fw"></small></h1>
-<div class="warn" id="safe" hidden><b>Mode sans échec.</b> Le firmware a planté plusieurs fois de suite : le décodage est désactivé. Envoie une mise à jour, ou <a href="#" onclick="reboot(1);return false">redémarre en mode normal</a>.</div>
-<div class="warn" id="apw" hidden><b>Wi‑Fi de secours actif.</b> Le réseau configuré est introuvable. Corrige le nom ou le mot de passe ci‑dessous.</div>
+<div class="warn" id="safe" hidden><b>Safe mode.</b> The firmware crashed several times in a row: decoding is disabled. Upload an update, or <a href="#" onclick="reboot(1);return false">reboot in normal mode</a>.</div>
+<div class="warn" id="apw" hidden><b>Fallback Wi‑Fi active.</b> The configured network cannot be found. Fix the name or the password below.</div>
 
 <div class="card"><div class="big"><span id="spd">–</span> <small>km/h</small></div>
 <div id="st" style="margin-top:4px">–</div>
-<div class="row"><span>Séance <b id="el">–</b></span><span>Marche <b id="wk">–</b></span><span>Distance <b id="di">–</b></span></div></div>
+<div class="row"><span>Session <b id="el">–</b></span><span>Walking <b id="wk">–</b></span><span>Distance <b id="di">–</b></span></div></div>
 
-<h2>Dernières séances en mémoire</h2>
-<div class="card" style="padding:4px 8px"><table><thead><tr><th>#</th><th>Début</th><th>Marche</th><th>Distance</th><th>Moy.</th><th>Max</th></tr></thead><tbody id="tb"><tr><td colspan="6">Chargement…</td></tr></tbody></table></div>
+<h2>Latest sessions in memory</h2>
+<div class="card" style="padding:4px 8px"><table><thead><tr><th>#</th><th>Start</th><th>Walking</th><th>Distance</th><th>Avg</th><th>Max</th></tr></thead><tbody id="tb"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
 
-<h2>Réglages</h2>
+<h2>Settings</h2>
 <div class="card">
-<label for="srv">Serveur de destination</label><input id="srv" placeholder="http://192.168.1.10:3000">
-<button onclick="saveSrv()">Enregistrer le serveur</button> <button class="ghost" onclick="resend()">Renvoyer toutes les séances</button>
-<label for="ssid" style="margin-top:18px">Réseau Wi‑Fi (2,4 GHz)</label><input id="ssid" autocomplete="off">
-<label for="pass">Mot de passe Wi‑Fi</label><input id="pass" type="password" autocomplete="new-password" placeholder="laisser vide pour un réseau ouvert">
-<button onclick="saveWifi()">Changer de réseau</button>
+<label for="srv">Destination server</label><input id="srv" placeholder="http://192.168.1.10:3000">
+<button onclick="saveSrv()">Save server</button> <button class="ghost" onclick="resend()">Resend all sessions</button>
+<label for="ssid" style="margin-top:18px">Wi‑Fi network (2.4 GHz)</label><input id="ssid" autocomplete="off">
+<label for="pass">Wi‑Fi password</label><input id="pass" type="password" autocomplete="new-password" placeholder="leave empty for an open network">
+<button onclick="saveWifi()">Change network</button>
 <div style="margin-top:8px"><small id="msg"></small></div></div>
 
-<h2>Mise à jour du firmware</h2>
-<div class="card"><small>Dans Arduino IDE : Croquis → Exporter les binaires compilés, puis choisir le fichier qui se termine par <b>.ino.bin</b>.</small>
-<input id="bin" type="file" accept=".bin" style="margin-top:10px"><button id="ub" onclick="update()">Envoyer la mise à jour</button>
+<h2>Firmware update</h2>
+<div class="card"><small>In Arduino IDE: Sketch → Export Compiled Binary, then pick the file ending in <b>.ino.bin</b>.</small>
+<input id="bin" type="file" accept=".bin" style="margin-top:10px"><button id="ub" onclick="update()">Upload update</button>
 <div style="margin-top:8px"><small id="um"></small></div></div>
 
-<h2>Diagnostic</h2>
+<h2>Diagnostics</h2>
 <div class="card"><div class="grid" id="dg"></div>
-<button class="ghost" onclick="location.href='/api/log'">Voir le journal</button> <button class="ghost" onclick="reboot(0)">Redémarrer l'ESP32</button></div>
+<button class="ghost" onclick="location.href='/api/log'">View log</button> <button class="ghost" onclick="reboot(0)">Reboot the ESP32</button></div>
 
 <script>
 const $=i=>document.getElementById(i);
 const hms=s=>{s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s/60)%60;return (h?h+'h ':'')+String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
-const dur=s=>s>=86400?Math.floor(s/86400)+' j '+Math.floor(s%86400/3600)+' h':s>=3600?Math.floor(s/3600)+' h '+Math.floor(s%3600/60)+' min':Math.floor(s/60)+' min';
+const dur=s=>s>=86400?Math.floor(s/86400)+' d '+Math.floor(s%86400/3600)+' h':s>=3600?Math.floor(s/3600)+' h '+Math.floor(s%3600/60)+' min':Math.floor(s/60)+' min';
 let filled=false;
 async function tick(){try{const s=await (await fetch('/api/status')).json();
  $('fw').textContent='v'+s.fw;$('spd').textContent=s.speed_kmh.toFixed(1);
- $('st').textContent=s.safe_mode?'décodage désactivé':(s.signal?s.state_name:'aucun signal du tapis');
+ $('st').textContent=s.safe_mode?'decoding disabled':(s.signal?s.state_name:'no signal from the treadmill');
  $('el').textContent=s.in_session?hms(s.elapsed_s):'–';$('wk').textContent=s.in_session?hms(s.walk_s):'–';
  $('di').textContent=s.in_session?(s.distance_m/1000).toFixed(3)+' km':'–';
  $('safe').hidden=!s.safe_mode;$('apw').hidden=!s.ap;
  if(!filled){$('srv').value=s.server;$('ssid').value=s.ssid;filled=true}
  const tot=s.frames_ok+s.frames_bad;
- const d=[['Allumé depuis',dur(s.uptime_s)],['Dernier démarrage',s.reset],['Plantages (total)',s.crashes],
-  ['Wi‑Fi',s.wifi?s.ssid+' · '+s.rssi+' dBm':'non connecté'],['Adresse',s.ip||'–'],['Temps réel',s.udp_sent+' paquets'],
-  ['Trames rejetées',tot?(100*s.frames_bad/tot).toFixed(2)+' %':'–'],['Séances en mémoire',s.stored+' ('+s.pending+' à envoyer)'],
-  ['Stockage',s.fs_used_kb+' / '+s.fs_total_kb+' Ko'],['Mémoire libre',Math.round(s.heap/1024)+' Ko (min '+Math.round(s.heap_min/1024)+')']];
+ const d=[['Uptime',dur(s.uptime_s)],['Last boot',s.reset],['Crashes (total)',s.crashes],
+  ['Wi‑Fi',s.wifi?s.ssid+' · '+s.rssi+' dBm':'not connected'],['Address',s.ip||'–'],['Real time',s.udp_sent+' packets'],
+  ['Rejected frames',tot?(100*s.frames_bad/tot).toFixed(2)+' %':'–'],['Sessions in memory',s.stored+' ('+s.pending+' to send)'],
+  ['Storage',s.fs_used_kb+' / '+s.fs_total_kb+' KB'],['Free memory',Math.round(s.heap/1024)+' KB (min '+Math.round(s.heap_min/1024)+')']];
  $('dg').innerHTML=d.map(x=>'<div><span>'+x[0]+'</span><b>'+x[1]+'</b></div>').join('');
-}catch(e){$('st').textContent='ESP32 injoignable'}}
+}catch(e){$('st').textContent='ESP32 unreachable'}}
 async function list(){try{const a=await (await fetch('/api/sessions?limit=20')).json();
- $('tb').innerHTML=a.length?a.map(x=>'<tr><td>'+x.id+'</td><td>'+(x.start?new Date(x.start*1000).toLocaleString('fr-FR'):'heure inconnue')+'</td><td>'+hms(x.walk_s)+'</td><td>'+(x.distance_m/1000).toFixed(3)+' km</td><td>'+x.avg_kmh.toFixed(1)+'</td><td>'+x.max_kmh.toFixed(1)+'</td></tr>').join(''):'<tr><td colspan="6">Aucune séance enregistrée</td></tr>';
+ $('tb').innerHTML=a.length?a.map(x=>'<tr><td>'+x.id+'</td><td>'+(x.start?new Date(x.start*1000).toLocaleString('en-GB'):'unknown time')+'</td><td>'+hms(x.walk_s)+'</td><td>'+(x.distance_m/1000).toFixed(3)+' km</td><td>'+x.avg_kmh.toFixed(1)+'</td><td>'+x.max_kmh.toFixed(1)+'</td></tr>').join(''):'<tr><td colspan="6">No session recorded</td></tr>';
 }catch(e){}}
-async function call(u,o){const r=await fetch(u,o);if(!r.ok)throw new Error(r.status==401?'mot de passe administrateur refusé':'erreur '+r.status);return r}
-async function saveSrv(){try{await call('/api/config?server='+encodeURIComponent($('srv').value));$('msg').textContent='Serveur enregistré.'}catch(e){$('msg').textContent=e.message}}
-async function resend(){try{await call('/api/config?resend=1');$('msg').textContent='Renvoi demandé.'}catch(e){$('msg').textContent=e.message}}
-async function saveWifi(){if(!confirm('Changer de réseau Wi‑Fi ? Si les identifiants sont faux, l\'ESP32 rouvrira son Wi‑Fi de secours "MotionX-Setup" après 90 secondes.'))return;
- try{await call('/api/wifi',{method:'POST',body:new URLSearchParams({ssid:$('ssid').value,pass:$('pass').value})});$('msg').textContent='Réseau enregistré, reconnexion en cours…'}catch(e){$('msg').textContent=e.message}}
-async function reboot(n){if(!confirm('Redémarrer l\'ESP32 ?'))return;try{await call('/api/reboot'+(n?'?normal=1':''));$('msg').textContent='Redémarrage…';setTimeout(()=>location.reload(),8000)}catch(e){alert(e.message)}}
-async function update(){const f=$('bin').files[0];if(!f){$('um').textContent='Choisis d\'abord un fichier .bin';return}
- if(!/\.bin$/.test(f.name)||/bootloader|partitions|merged/.test(f.name)){$('um').textContent='Mauvais fichier : il faut celui qui se termine par .ino.bin';return}
- try{await call('/api/auth');$('ub').disabled=true;$('um').textContent='Envoi de '+Math.round(f.size/1024)+' Ko… ne coupe pas le tapis.';
+async function call(u,o){const r=await fetch(u,o);if(!r.ok)throw new Error(r.status==401?'admin password rejected':'error '+r.status);return r}
+async function saveSrv(){try{await call('/api/config?server='+encodeURIComponent($('srv').value));$('msg').textContent='Server saved.'}catch(e){$('msg').textContent=e.message}}
+async function resend(){try{await call('/api/config?resend=1');$('msg').textContent='Resend requested.'}catch(e){$('msg').textContent=e.message}}
+async function saveWifi(){if(!confirm('Change Wi‑Fi network? If the credentials are wrong, the ESP32 will reopen its fallback Wi‑Fi "MotionX-Setup" after 90 seconds.'))return;
+ try{await call('/api/wifi',{method:'POST',body:new URLSearchParams({ssid:$('ssid').value,pass:$('pass').value})});$('msg').textContent='Network saved, reconnecting…'}catch(e){$('msg').textContent=e.message}}
+async function reboot(n){if(!confirm('Reboot the ESP32?'))return;try{await call('/api/reboot'+(n?'?normal=1':''));$('msg').textContent='Rebooting…';setTimeout(()=>location.reload(),8000)}catch(e){alert(e.message)}}
+async function update(){const f=$('bin').files[0];if(!f){$('um').textContent='Choose a .bin file first';return}
+ if(!/\.bin$/.test(f.name)||/bootloader|partitions|merged/.test(f.name)){$('um').textContent='Wrong file: you need the one ending in .ino.bin';return}
+ try{await call('/api/auth');$('ub').disabled=true;$('um').textContent='Uploading '+Math.round(f.size/1024)+' KB… do not power off the treadmill.';
   const fd=new FormData();fd.append('firmware',f,f.name);const r=await fetch('/update',{method:'POST',body:fd});const t=await r.text();$('um').textContent=t;
   if(r.ok)setTimeout(()=>location.reload(),20000);else $('ub').disabled=false}
- catch(e){$('um').textContent='Connexion coupée : '+e.message+'. Si l\'envoi était terminé, la page reviendra après le redémarrage.';$('ub').disabled=false;setTimeout(()=>location.reload(),20000)}}
+ catch(e){$('um').textContent='Connection lost: '+e.message+'. If the upload had finished, the page will come back after the reboot.';$('ub').disabled=false;setTimeout(()=>location.reload(),20000)}}
 tick();list();setInterval(tick,1000);setInterval(list,20000);
 </script></body></html>)HTML";

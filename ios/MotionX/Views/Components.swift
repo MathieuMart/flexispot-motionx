@@ -45,7 +45,7 @@ struct StatusPill: View {
     }
 }
 
-/// Profil de vitesse d'une séance (créneaux, comme sur le tableau de bord web).
+/// Speed profile of a session (stepped, as on the web dashboard).
 struct SpeedChart: View {
     struct Point: Identifiable { let id: Int; let t: Double; let v: Double }
 
@@ -64,11 +64,11 @@ struct SpeedChart: View {
         let data = series
         let vmax = max(4, (data.map(\.v).max() ?? 0).rounded(.up) + 0.5)
         Chart(data) { p in
-            AreaMark(x: .value("Temps", p.t), y: .value("km/h", p.v))
+            AreaMark(x: .value("Time", p.t), y: .value("km/h", p.v))
                 .interpolationMethod(.stepEnd)
                 .foregroundStyle(LinearGradient(colors: [Color.accentColor.opacity(0.35), Color.accentColor.opacity(0.02)],
                                                 startPoint: .top, endPoint: .bottom))
-            LineMark(x: .value("Temps", p.t), y: .value("km/h", p.v))
+            LineMark(x: .value("Time", p.t), y: .value("km/h", p.v))
                 .interpolationMethod(.stepEnd)
                 .foregroundStyle(Color.accentColor)
                 .lineStyle(StrokeStyle(lineWidth: 2))
@@ -93,9 +93,9 @@ struct SpeedChart: View {
 struct ServerMissingView: View {
     var body: some View {
         ContentUnavailableView {
-            Label("Serveur non configuré", systemImage: "server.rack")
+            Label("Server not configured", systemImage: "server.rack")
         } description: {
-            Text("Indique l'adresse de ton serveur MotionX (ex. 192.168.1.20:3000) dans l'onglet Réglages.")
+            Text("Enter the address of your MotionX server (e.g. 192.168.1.20:3000) in the Settings tab.")
         }
     }
 }

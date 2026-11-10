@@ -18,13 +18,13 @@ struct SettingsView: View {
                         .autocorrectionDisabled()
                         .onSubmit(save)
                     HStack {
-                        Button("Enregistrer", action: save)
+                        Button("Save", action: save)
                             .disabled(draftURL == model.serverURL)
                         Spacer()
                         Button {
                             Task { await test() }
                         } label: {
-                            if testing { ProgressView() } else { Text("Tester") }
+                            if testing { ProgressView() } else { Text("Test") }
                         }
                         .disabled(APIClient(urlString: draftURL) == nil || testing)
                     }
@@ -32,22 +32,22 @@ struct SettingsView: View {
                         Text(testResult).font(.footnote).foregroundStyle(.secondary)
                     }
                 } header: {
-                    Text("Serveur MotionX")
+                    Text("MotionX Server")
                 } footer: {
-                    Text("Adresse du serveur Node.js sur ton NAS (même port que le tableau de bord web).")
+                    Text("Address of the Node.js server on your NAS (same port as the web dashboard).")
                 }
 
                 Section {
                     if !model.health.isAvailable {
-                        Label("Santé n'est pas disponible sur cet appareil", systemImage: "heart.slash")
+                        Label("Health is not available on this device", systemImage: "heart.slash")
                     } else if model.health.isAuthorized {
-                        Label("Accès autorisé", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
-                        Toggle("Synchro automatique", isOn: $model.autoHealthSync)
+                        Label("Access granted", systemImage: "checkmark.seal.fill").foregroundStyle(.green)
+                        Toggle("Automatic sync", isOn: $model.autoHealthSync)
                         Button {
                             Task { await model.syncHealthNow() }
                         } label: {
                             HStack {
-                                Text("Synchroniser maintenant")
+                                Text("Sync now")
                                 Spacer()
                                 if model.health.running { ProgressView() }
                             }
@@ -60,15 +60,15 @@ struct SettingsView: View {
                                 catch { healthError = error.localizedDescription }
                             }
                         } label: {
-                            Label("Autoriser l'accès à Santé", systemImage: "heart.fill")
+                            Label("Allow access to Health", systemImage: "heart.fill")
                         }
                         if model.health.authStatus == .sharingDenied {
-                            Text("Accès refusé. Active-le dans Réglages › Santé › Accès aux données et appareils › MotionX.")
+                            Text("Access denied. Turn it on in Settings › Health › Data Access & Devices › MotionX.")
                                 .font(.footnote).foregroundStyle(.secondary)
                         }
                     }
                     if let msg = model.health.lastMessage, let date = model.health.lastSync {
-                        LabeledContent("Dernière synchro") {
+                        LabeledContent("Last sync") {
                             VStack(alignment: .trailing) {
                                 Text(date.formatted(.relative(presentation: .named)))
                                 Text(msg).font(.caption).foregroundStyle(.secondary)
@@ -79,45 +79,45 @@ struct SettingsView: View {
                         Text(healthError).font(.footnote).foregroundStyle(.red)
                     }
                 } header: {
-                    Text("Apple Santé")
+                    Text("Apple Health")
                 } footer: {
-                    Text("Chaque séance devient un entraînement « Marche » en intérieur, avec distance, calories et pas. La synchro se fait à l'ouverture de l'app, dès qu'une séance se termine pendant que l'app est ouverte, et de temps en temps en arrière-plan. Tu peux désactiver le raccourci iOS : les séances déjà transférées ne seront pas renvoyées.")
+                    Text("Each session becomes an indoor “Walking” workout, with distance, calories and steps. Sync happens when the app opens, as soon as a session ends while the app is open, and from time to time in the background. You can turn off the iOS shortcut: sessions already transferred will not be sent again.")
                 }
 
                 Section {
                     Toggle("Live Activity", isOn: $model.liveActivityEnabled)
-                    Toggle("Mise à jour écran verrouillé", isOn: $model.keepAwake)
+                    Toggle("Lock Screen updates", isOn: $model.keepAwake)
                         .disabled(!model.liveActivityEnabled)
                 } header: {
-                    Text("Écran verrouillé et Dynamic Island")
+                    Text("Lock Screen and Dynamic Island")
                 } footer: {
-                    Text("La Live Activity démarre quand une séance commence et que l'app est ouverte. « Mise à jour écran verrouillé » garde l'app éveillée pendant la séance en jouant du silence, mélangé à ta musique sans la couper, pour que vitesse, distance et pas restent à jour. Sans cette option, seul le chrono continue d'avancer.")
+                    Text("The Live Activity starts when a session begins while the app is open. “Lock Screen updates” keeps the app awake during the session by playing silence, mixed with your music without interrupting it, so that speed, distance and steps stay up to date. Without this option, only the timer keeps ticking.")
                 }
 
                 if let live = model.live.live {
-                    Section("Tapis") {
+                    Section("Treadmill") {
                         if let url = live.deviceURL {
                             Link(destination: url) {
-                                LabeledContent("Page de l'ESP32", value: url.host() ?? "")
+                                LabeledContent("ESP32 page", value: url.host() ?? "")
                             }
                         }
                         if let fw = live.fw { LabeledContent("Firmware", value: fw) }
                         if let rssi = live.rssi, rssi != 0 { LabeledContent("Wi-Fi", value: "\(rssi) dBm") }
-                        if let stored = live.stored { LabeledContent("Séances en mémoire", value: "\(stored)") }
-                        if let pending = live.pending, pending > 0 { LabeledContent("À envoyer au serveur", value: "\(pending)") }
+                        if let stored = live.stored { LabeledContent("Sessions in memory", value: "\(stored)") }
+                        if let pending = live.pending, pending > 0 { LabeledContent("To send to the server", value: "\(pending)") }
                     }
                 }
 
                 Section {
-                    LabeledContent("Taille", value: "\(Int(model.history.profile.heightCm)) cm")
-                    LabeledContent("Poids", value: "\(Int(model.history.profile.weightKg)) kg")
+                    LabeledContent("Height", value: "\(Int(model.history.profile.heightCm)) cm")
+                    LabeledContent("Weight", value: "\(Int(model.history.profile.weightKg)) kg")
                 } header: {
-                    Text("Profil (calcul des pas et calories)")
+                    Text("Profile (steps and calories calculation)")
                 } footer: {
-                    Text("Défini côté serveur avec les variables HEIGHT_CM et WEIGHT_KG.")
+                    Text("Set on the server side with the HEIGHT_CM and WEIGHT_KG variables.")
                 }
             }
-            .navigationTitle("Réglages")
+            .navigationTitle("Settings")
             .onAppear { if draftURL.isEmpty { draftURL = model.serverURL } }
         }
     }
@@ -134,9 +134,9 @@ struct SettingsView: View {
         do {
             let r = try await api.live()
             if let live = r.live {
-                testResult = "✅ Serveur OK · tapis : \(live.isStale() ? "silencieux" : live.stateLabel) · \(r.udpPackets ?? 0) paquets UDP reçus"
+                testResult = "✅ Server OK · treadmill: \(live.isStale() ? "silent" : live.stateLabel) · \(r.udpPackets ?? 0) UDP packets received"
             } else {
-                testResult = "✅ Serveur OK · aucune donnée reçue de l'ESP32 pour l'instant"
+                testResult = "✅ Server OK · no data received from the ESP32 yet"
             }
         } catch {
             testResult = "❌ \(error.localizedDescription)"

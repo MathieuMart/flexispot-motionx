@@ -23,7 +23,7 @@ final class AppModel {
         didSet { UserDefaults.standard.set(liveActivityEnabled, forKey: "liveActivity"); updateActivity() }
     }
 
-    /// Garde l'app éveillée écran verrouillé pendant une séance (audio silencieux).
+    /// Keeps the app awake on the Lock Screen during a session (silent audio).
     var keepAwake: Bool = UserDefaults.standard.object(forKey: "keepAwake") as? Bool ?? true {
         didSet { UserDefaults.standard.set(keepAwake, forKey: "keepAwake"); updateActivity() }
     }
@@ -36,7 +36,7 @@ final class AppModel {
     private init() {
         live.onSessionEvent = { [weak self] ev in self?.sessionEvent(ev) }
         live.onUpdate = { [weak self] in self?.updateActivity() }
-        // Détecte un ESP32 devenu silencieux même sans nouveau paquet.
+        // Detects an ESP32 that went silent even when no new packet arrives.
         Task { [weak self] in
             while true {
                 try? await Task.sleep(for: .seconds(5))
@@ -54,7 +54,7 @@ final class AppModel {
             keeper.start()
         } else if keeper.isRunning {
             keeper.stop()
-            if !isActive { live.stop() }       // plus rien à suivre : on laisse iOS suspendre l'app
+            if !isActive { live.stop() }       // nothing left to track: let iOS suspend the app
         }
     }
 
@@ -65,7 +65,7 @@ final class AppModel {
         Task { await history.refresh(api: api) }
     }
 
-    // MARK: cycle de vie
+    // MARK: lifecycle
 
     func becameActive() {
         isActive = true
@@ -79,12 +79,12 @@ final class AppModel {
 
     func wentToBackground() {
         isActive = false
-        // Pendant une séance, l'audio silencieux garde l'app éveillée : on garde le flux ouvert.
+        // During a session, the silent audio keeps the app awake: keep the stream open.
         if !keeper.isRunning { live.stop() }
         scheduleBackgroundRefresh()
     }
 
-    // MARK: synchro Santé
+    // MARK: Health sync
 
     func syncHealthNow() async {
         guard let api else { return }
@@ -97,7 +97,7 @@ final class AppModel {
         await syncHealthNow()
     }
 
-    /// Le serveur annonce une séance : nouvelle séance de l'ESP32 (avec `id`) ou séance marquée transférée.
+    /// The server announces a session: a new session from the ESP32 (with `id`) or a session marked as transferred.
     private func sessionEvent(_ ev: StreamSession) {
         refreshDebounce?.cancel()
         let isNew = ev.id != nil
@@ -109,7 +109,7 @@ final class AppModel {
         }
     }
 
-    // MARK: rafraîchissement en arrière-plan
+    // MARK: background refresh
 
     func scheduleBackgroundRefresh() {
         let req = BGAppRefreshTaskRequest(identifier: Self.refreshTaskId)

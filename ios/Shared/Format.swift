@@ -1,6 +1,6 @@
 import Foundation
 
-// Partagé entre l'app et l'extension Live Activity.
+// Shared between the app and the Live Activity extension.
 enum Fmt {
     /// 754 → "12:34", 3723 → "1:02:03"
     static func hms(_ seconds: Double) -> String {
@@ -10,14 +10,14 @@ enum Fmt {
     }
     static func hms(_ seconds: Int) -> String { hms(Double(seconds)) }
 
-    /// 740 → "740 m", 1234 → "1,23 km"
+    /// 740 → "740 m", 1234 → "1.23 km"
     static func distance(_ m: Double) -> String {
         m < 1000 ? "\(Int(m.rounded())) m" : (m / 1000).formatted(.number.precision(.fractionLength(2))) + " km"
     }
 
     static func km(_ m: Double) -> String { (m / 1000).formatted(.number.precision(.fractionLength(2))) }
 
-    /// Valeur + unité séparées pour les tuiles : (740, "m") ou ("1,23", "km")
+    /// Value + unit split for the tiles: (740, "m") or ("1.23", "km")
     static func distanceParts(_ m: Double) -> (String, String) {
         m < 1000 ? ("\(Int(m.rounded()))", "m") : (km(m), "km")
     }
@@ -26,7 +26,7 @@ enum Fmt {
 
     static func speed(_ kmh: Double) -> String { kmh.formatted(.number.precision(.fractionLength(1))) }
 
-    /// "1 h 05" ou "42 min"
+    /// "1 h 05" or "42 min"
     static func duration(_ seconds: Int) -> String {
         let m = seconds / 60
         return m >= 60 ? "\(m / 60) h \(String(format: "%02d", m % 60))" : "\(m) min"

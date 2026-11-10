@@ -1,8 +1,8 @@
 import Foundation
 
-// Formats JSON du serveur Node (server.js). Le décodeur convertit les clés snake_case → camelCase.
+// JSON formats of the Node server (server.js). The decoder converts snake_case keys → camelCase.
 
-/// Dernier état envoyé par l'ESP32 (UDP → serveur → SSE).
+/// Last state sent by the ESP32 (UDP → server → SSE).
 struct LiveState: Decodable, Equatable {
     var device: String?
     var fw: String?
@@ -16,8 +16,8 @@ struct LiveState: Decodable, Equatable {
     var elapsedS: Int
     var walkS: Int
     var distanceM: Double
-    var receivedAt: Double?      // ms epoch, horloge du serveur
-    var from: String?            // IP de l'ESP32 vue par le serveur
+    var receivedAt: Double?      // ms epoch, server clock
+    var from: String?            // ESP32 IP as seen by the server
     var via: String?
     var ip: String?
     var rssi: Int?
@@ -52,35 +52,35 @@ struct LiveState: Decodable, Equatable {
         pending = c.v(.pending, nil)
     }
 
-    /// Le serveur n'a rien reçu de l'ESP32 depuis plus de 20 s (même règle que le tableau de bord web).
+    /// The server has received nothing from the ESP32 for more than 20 s (same rule as the web dashboard).
     func isStale(now: Date = .now) -> Bool {
         guard let r = receivedAt else { return true }
         return now.timeIntervalSince1970 * 1000 - r > 20_000
     }
 
-    /// Tapis en compte à rebours, en marche ou en décélération.
+    /// Treadmill counting down, walking or decelerating.
     var isActive: Bool { signal && state >= 2 }
 
     var stateLabel: String {
-        guard signal else { return "Tapis éteint" }
+        guard signal else { return "Treadmill off" }
         switch state {
-        case 0: return "Initialisation"
-        case 1: return "Veille"
-        case 2: return "Compte à rebours"
-        case 3: return "En marche"
-        case 5: return "Décélération"
-        default: return stateName.isEmpty ? "Inconnu" : stateName.capitalized
+        case 0: return "Initializing"
+        case 1: return "Standby"
+        case 2: return "Countdown"
+        case 3: return "Walking"
+        case 5: return "Slowing down"
+        default: return stateName.isEmpty ? "Unknown" : stateName.capitalized
         }
     }
 
-    /// Adresse de la page web de l'ESP32.
+    /// Address of the ESP32 web page.
     var deviceURL: URL? {
         let host = (ip?.isEmpty == false ? ip : from) ?? ""
         return host.isEmpty ? nil : URL(string: "http://\(host)")
     }
 }
 
-/// Un événement brut de séance : [ms depuis le début, état, vitesse × 10].
+/// A raw session event: [ms since start, state, speed × 10].
 struct TracePoint: Decodable, Hashable {
     let ms: Int
     let state: Int
@@ -109,7 +109,7 @@ struct Profile: Decodable, Equatable {
     var weightKg: Double = 75
 }
 
-/// Valeurs recalculées par le serveur à partir des événements.
+/// Values recomputed by the server from the events.
 struct Computed: Decodable, Hashable {
     var distanceM: Double
     var walkS: Int
@@ -169,10 +169,10 @@ struct LiveResponse: Decodable {
     var udpPackets: Int?
 }
 
-/// Séance à transférer dans Santé (GET /api/health/pending).
+/// Session to transfer to Health (GET /api/health/pending).
 struct PendingSession: Decodable {
     var file: String
-    var start: String          // ISO 8601 avec décalage, ex. 2026-11-09T21:33:03+01:00
+    var start: String          // ISO 8601 with offset, e.g. 2026-11-09T21:33:03+01:00
     var end: String
     var durationMin: Double
     var distanceM: Double
@@ -187,13 +187,13 @@ struct PendingResponse: Decodable {
 
 struct OKResponse: Decodable { var ok: Bool }
 
-// Charges utiles du flux Server-Sent Events /api/stream
+// Payloads of the Server-Sent Events stream /api/stream
 struct StreamInit: Decodable { var live: LiveState?; var trace: Trace? }
 struct StreamLive: Decodable { var live: LiveState; var point: TracePoint?; var sessionId: Int? }
 struct StreamSession: Decodable { var file: String?; var id: Int? }
 
 extension KeyedDecodingContainer {
-    /// Décode une valeur, ou renvoie la valeur par défaut si absente / null / mauvais type.
+    /// Decodes a value, or returns the fallback if missing / null / wrong type.
     func v<T: Decodable>(_ key: Key, _ fallback: T) -> T {
         ((try? decodeIfPresent(T.self, forKey: key)) ?? nil) ?? fallback
     }

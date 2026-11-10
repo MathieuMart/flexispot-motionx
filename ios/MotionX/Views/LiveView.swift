@@ -9,7 +9,7 @@ struct LiveView: View {
                 if model.api == nil {
                     ServerMissingView()
                 } else {
-                    // Rafraîchit chaque seconde pour détecter un ESP32 silencieux.
+                    // Refreshes every second to detect a silent ESP32.
                     TimelineView(.periodic(from: .now, by: 1)) { ctx in
                         content(now: ctx.date)
                     }
@@ -43,8 +43,8 @@ struct LiveView: View {
 
     private func header(live: LiveState?, stale: Bool) -> some View {
         let (text, color): (String, Color) = {
-            guard let live else { return ("Aucune donnée", .gray) }
-            if stale { return ("Hors ligne", .orange) }
+            guard let live else { return ("No data", .gray) }
+            if stale { return ("Offline", .orange) }
             return (live.stateLabel, live.isActive ? .green : .gray)
         }()
         return HStack {
@@ -58,10 +58,10 @@ struct LiveView: View {
         let (text, image): (String, String) = {
             switch model.live.connection {
             case .idle: return ("—", "pause.circle")
-            case .connecting: return ("Connexion…", "antenna.radiowaves.left.and.right")
-            case .streaming: return ("Temps réel", "dot.radiowaves.left.and.right")
-            case .polling: return ("Mode dégradé", "arrow.clockwise")
-            case .failed: return ("Serveur injoignable", "exclamationmark.triangle")
+            case .connecting: return ("Connecting…", "antenna.radiowaves.left.and.right")
+            case .streaming: return ("Real-time", "dot.radiowaves.left.and.right")
+            case .polling: return ("Fallback mode", "arrow.clockwise")
+            case .failed: return ("Server unreachable", "exclamationmark.triangle")
             }
         }()
         return Label(text, systemImage: image)
@@ -93,14 +93,14 @@ struct LiveView: View {
     private func sessionCard(_ live: LiveState) -> some View {
         let est = Estimator.compute(model.live.points, endMs: live.sessionMs, profile: model.history.profile)
         return VStack(alignment: .leading, spacing: 12) {
-            Text("Séance en cours").font(.headline)
+            Text("Current session").font(.headline)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                StatTile(title: "Durée", value: Fmt.hms(live.elapsedS), systemImage: "stopwatch")
-                StatTile(title: "Marche", value: Fmt.hms(live.walkS), systemImage: "figure.walk", tint: .green)
+                StatTile(title: "Duration", value: Fmt.hms(live.elapsedS), systemImage: "stopwatch")
+                StatTile(title: "Walking", value: Fmt.hms(live.walkS), systemImage: "figure.walk", tint: .green)
                 StatTile(title: "Distance", value: Fmt.distanceParts(live.distanceM).0, unit: Fmt.distanceParts(live.distanceM).1, systemImage: "point.topleft.down.to.point.bottomright.curvepath", tint: .blue)
-                StatTile(title: "Pas ≈", value: Fmt.int(est.steps), systemImage: "shoeprints.fill", tint: .orange)
+                StatTile(title: "Steps ≈", value: Fmt.int(est.steps), systemImage: "shoeprints.fill", tint: .orange)
                 StatTile(title: "Calories ≈", value: Fmt.int(est.kcal), unit: "kcal", systemImage: "flame.fill", tint: .red)
-                StatTile(title: "Allure", value: live.speedKmh > 0 ? Fmt.hms(3600 / live.speedKmh) : "–", unit: "/km", systemImage: "speedometer", tint: .purple)
+                StatTile(title: "Pace", value: live.speedKmh > 0 ? Fmt.hms(3600 / live.speedKmh) : "–", unit: "/km", systemImage: "speedometer", tint: .purple)
             }
             if !model.live.points.isEmpty {
                 SpeedChart(points: model.live.points, endMs: live.sessionMs)
@@ -112,7 +112,7 @@ struct LiveView: View {
         .background(.background.secondary.opacity(0.5), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    /// Aujourd'hui = séances terminées + séance en cours.
+    /// Today = finished sessions + ongoing session.
     private func todayCard(live: LiveState?) -> some View {
         let t = model.history.today
         var dist = t.distanceM, walk = t.walkS, steps = t.steps
@@ -122,7 +122,7 @@ struct LiveView: View {
         }
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Aujourd'hui").font(.headline)
+                Text("Today").font(.headline)
                 Spacer()
                 if let msg = model.health.lastMessage, model.health.isAuthorized {
                     Label(msg, systemImage: "heart.fill")
@@ -131,8 +131,8 @@ struct LiveView: View {
             }
             HStack(spacing: 12) {
                 StatTile(title: "Distance", value: Fmt.distanceParts(dist).0, unit: Fmt.distanceParts(dist).1, systemImage: "map", tint: .blue)
-                StatTile(title: "Pas", value: Fmt.int(steps), systemImage: "shoeprints.fill", tint: .orange)
-                StatTile(title: "Marche", value: Fmt.duration(walk), systemImage: "clock", tint: .green)
+                StatTile(title: "Steps", value: Fmt.int(steps), systemImage: "shoeprints.fill", tint: .orange)
+                StatTile(title: "Walking", value: Fmt.duration(walk), systemImage: "clock", tint: .green)
             }
         }
     }

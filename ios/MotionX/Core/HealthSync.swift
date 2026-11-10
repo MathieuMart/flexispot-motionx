@@ -2,17 +2,17 @@ import Foundation
 import HealthKit
 import Observation
 
-/// Transfère les séances du serveur dans Apple Santé (remplace le raccourci iOS).
-/// Chaque séance devient un entraînement « Marche » en intérieur avec distance, calories et pas.
-/// Anti-doublon : identifiant de synchro HealthKit = nom du fichier de séance.
+/// Transfers the server's sessions to Apple Health (replaces the iOS shortcut).
+/// Each session becomes an indoor "Walking" workout with distance, calories and steps.
+/// Deduplication: HealthKit sync identifier = session file name.
 @MainActor @Observable
 final class HealthSync {
     enum HealthError: LocalizedError {
         case unavailable, notAuthorized
         var errorDescription: String? {
             switch self {
-            case .unavailable: return "Santé n'est pas disponible sur cet appareil"
-            case .notAuthorized: return "Accès à Santé non autorisé (Réglages › Santé › Accès aux données › MotionX)"
+            case .unavailable: return "Health is not available on this device"
+            case .notAuthorized: return "Health access not authorized (Settings › Health › Data Access & Devices › MotionX)"
             }
         }
     }
@@ -47,7 +47,7 @@ final class HealthSync {
         refreshStatus()
     }
 
-    /// Synchronise toutes les séances en attente. Renvoie le nombre d'entraînements créés.
+    /// Syncs all pending sessions. Returns the number of workouts created.
     @discardableResult
     func sync(api: APIClient) async -> Int {
         guard !running else { return 0 }
@@ -55,10 +55,10 @@ final class HealthSync {
         defer { running = false }
         do {
             let n = try await performSync(api: api)
-            finish(n == 0 ? "À jour, rien de nouveau" : "\(n) séance\(n > 1 ? "s" : "") ajoutée\(n > 1 ? "s" : "") à Santé")
+            finish(n == 0 ? "Up to date, nothing new" : "\(n) session\(n > 1 ? "s" : "") added to Health")
             return n
         } catch {
-            finish("Échec : \(error.localizedDescription)")
+            finish("Failed: \(error.localizedDescription)")
             return 0
         }
     }
@@ -76,7 +76,7 @@ final class HealthSync {
         guard isAuthorized else { throw HealthError.notAuthorized }
 
         var created = 0
-        // Le serveur renvoie au plus 20 séances par appel : on boucle tant qu'il en reste.
+        // The server returns at most 20 sessions per call: loop while some remain.
         for _ in 0..<20 {
             let page = try await api.healthPending()
             if page.sessions.isEmpty { break }

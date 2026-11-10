@@ -41,7 +41,7 @@ final class SessionsStore {
 
     struct DayTotal: Identifiable { var day: Date; var distanceM: Double; var steps: Int; var id: Date { day } }
 
-    /// Distance par jour sur les `days` derniers jours (jours vides inclus).
+    /// Distance per day over the last `days` days (empty days included).
     func daily(days: Int = 7) -> [DayTotal] {
         let cal = Calendar.current
         let today = cal.startOfDay(for: .now)
@@ -54,7 +54,7 @@ final class SessionsStore {
         }
     }
 
-    /// Séances groupées par jour, du plus récent au plus ancien.
+    /// Sessions grouped by day, most recent first.
     var byDay: [(day: Date, sessions: [SessionSummary])] {
         let groups = Dictionary(grouping: sessions) { Calendar.current.startOfDay(for: $0.startDate) }
         return groups.keys.sorted(by: >).map { ($0, groups[$0]!.sorted { $0.start > $1.start }) }

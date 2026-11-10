@@ -22,7 +22,7 @@ struct WalkLiveActivity: Widget {
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Label(st.ended ? "Terminé" : st.stateLabel, systemImage: "figure.walk")
+                        Label(st.ended ? "Finished" : st.stateLabel, systemImage: "figure.walk")
                             .font(.caption).foregroundStyle(accent)
                         SpeedText(state: st, size: 34)
                     }
@@ -30,7 +30,7 @@ struct WalkLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text("Marche").font(.caption).foregroundStyle(.secondary)
+                        Text("Walking").font(.caption).foregroundStyle(.secondary)
                         WalkTimer(state: st)
                             .font(.system(size: 28, weight: .semibold, design: .rounded).monospacedDigit())
                     }
@@ -40,7 +40,7 @@ struct WalkLiveActivity: Widget {
                     HStack {
                         Metric(value: Fmt.distanceParts(st.distanceM).0, unit: Fmt.distanceParts(st.distanceM).1, icon: "map")
                         Spacer()
-                        Metric(value: Fmt.int(st.steps), unit: "pas", icon: "shoeprints.fill")
+                        Metric(value: Fmt.int(st.steps), unit: "steps", icon: "shoeprints.fill")
                         Spacer()
                         Metric(value: Fmt.int(st.kcal), unit: "kcal", icon: "flame.fill")
                     }
@@ -67,7 +67,7 @@ struct WalkLiveActivity: Widget {
     }
 }
 
-/// Chrono de marche : avance tout seul tant que la bande tourne, figé sinon.
+/// Walking timer: ticks on its own while the belt is moving, frozen otherwise.
 struct WalkTimer: View {
     let state: WalkActivityAttributes.ContentState
 
@@ -119,7 +119,7 @@ struct LockScreenView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(accent)
                 Spacer()
-                Text(state.ended ? "Séance terminée" : state.stateLabel)
+                Text(state.ended ? "Session ended" : state.stateLabel)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
             }
@@ -127,7 +127,7 @@ struct LockScreenView: View {
                 SpeedText(state: state, size: 44)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text("Marche").font(.caption).foregroundStyle(.secondary)
+                    Text("Walking").font(.caption).foregroundStyle(.secondary)
                     WalkTimer(state: state)
                         .font(.system(size: 34, weight: .semibold, design: .rounded).monospacedDigit())
                 }
@@ -135,12 +135,12 @@ struct LockScreenView: View {
             HStack {
                 Metric(value: Fmt.distanceParts(state.distanceM).0, unit: Fmt.distanceParts(state.distanceM).1, icon: "map")
                 Spacer()
-                Metric(value: Fmt.int(state.steps), unit: "pas", icon: "shoeprints.fill")
+                Metric(value: Fmt.int(state.steps), unit: "steps", icon: "shoeprints.fill")
                 Spacer()
                 Metric(value: Fmt.int(state.kcal), unit: "kcal", icon: "flame.fill")
             }
             if isStale && !state.ended {
-                Text("Pas de mise à jour depuis \(state.updatedAt.formatted(date: .omitted, time: .shortened)) — ouvre MotionX")
+                Text("No update since \(state.updatedAt.formatted(date: .omitted, time: .shortened)) — open MotionX")
                     .font(.caption2).foregroundStyle(.orange)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -150,14 +150,14 @@ struct LockScreenView: View {
     }
 }
 
-// Aperçus Xcode
+// Xcode previews
 extension WalkActivityAttributes.ContentState {
     static let preview = WalkActivityAttributes.ContentState(
-        speedKmh: 4.5, distanceM: 2340, steps: 3120, kcal: 142, walkS: 1834, stateLabel: "En marche",
+        speedKmh: 4.5, distanceM: 2340, steps: 3120, kcal: 142, walkS: 1834, stateLabel: "Walking",
         moving: true, walkTimerStart: .now.addingTimeInterval(-1834), updatedAt: .now, ended: false)
 }
 
-#Preview("Écran verrouillé", as: .content, using: WalkActivityAttributes(sessionId: 7, startedAt: .now)) {
+#Preview("Lock Screen", as: .content, using: WalkActivityAttributes(sessionId: 7, startedAt: .now)) {
     WalkLiveActivity()
 } contentStates: {
     WalkActivityAttributes.ContentState.preview

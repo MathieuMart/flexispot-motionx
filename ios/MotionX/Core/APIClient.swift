@@ -7,14 +7,14 @@ enum APIError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .badURL: return "Adresse du serveur invalide"
-        case .http(let code): return "Le serveur a répondu \(code)"
-        case .streamClosed: return "Flux temps réel fermé"
+        case .badURL: return "Invalid server address"
+        case .http(let code): return "The server responded with \(code)"
+        case .streamClosed: return "Real-time stream closed"
         }
     }
 }
 
-/// Client HTTP du serveur MotionX (server.js sur le NAS).
+/// HTTP client for the MotionX server (server.js on the NAS).
 struct APIClient {
     let base: URL
 
@@ -24,7 +24,7 @@ struct APIClient {
         return d
     }()
 
-    /// Accepte "192.168.1.20:3000", "nas.local:3000", "http://…", avec ou sans "/" final.
+    /// Accepts "192.168.1.20:3000", "nas.local:3000", "http://…", with or without a trailing "/".
     init?(urlString: String) {
         var s = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !s.isEmpty else { return nil }

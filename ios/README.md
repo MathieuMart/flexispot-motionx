@@ -1,26 +1,25 @@
 # MotionX iOS
 
-App iPhone (SwiftUI, iOS 17+) pour le serveur MotionX (`server.js` sur le NAS).
+iPhone app (SwiftUI, iOS 17+) for the MotionX server (`server/app/server.js`).
 
-- **Direct** : état du tapis, vitesse, durée, distance, pas et calories estimés, profil de vitesse, en temps réel via `GET /api/stream` (SSE), avec repli sur `GET /api/live`.
-- **Historique** : `GET /api/sessions` (résumé et graphique des 7 derniers jours, séances par jour), détail via `GET /api/sessions/<fichier>`.
-- **Apple Santé** : remplace le raccourci. `GET /api/health/pending` → un entraînement « Marche » en intérieur (distance, kcal, pas) → `GET /api/health/done?file=…`.
-  Anti-doublon : identifiant de synchro HealthKit `motionx.<fichier>`. Synchro à l'ouverture, à la fin de chaque séance (app ouverte) et en arrière-plan (BGAppRefresh).
+- **Live**: treadmill state, speed, duration, distance, estimated steps and calories, and the speed profile, in real time through `GET /api/stream` (SSE), falling back to `GET /api/live`.
+- **History**: `GET /api/sessions` (summary and chart of the last 7 days, sessions grouped by day), details through `GET /api/sessions/<file>`.
+- **Apple Health**: replaces the Shortcut. `GET /api/health/pending` → an indoor *Walking* workout (distance, kcal, steps) → `GET /api/health/done?file=…`.
+  No duplicates: each workout carries the HealthKit sync identifier `motionx.<file>`. Sync runs when the app opens, at the end of each session (app open) and in the background (BGAppRefresh).
+- **Live Activity** (lock screen and Dynamic Island): speed, walking timer, distance, steps, kcal. It starts when a session begins while the app is open, and ends with a summary shown for 10 minutes. Without push notifications (free Personal Team), the app itself updates it; the "Lock screen updates" option keeps the app awake during the session by playing mixed silent audio (`audio` background mode: fine for personal use, rejected on the App Store).
 
-- **Live Activity** (écran verrouillé + Dynamic Island) : vitesse, chrono de marche, distance, pas, kcal. Démarre quand une séance commence avec l'app ouverte, se termine avec un résumé affiché 10 min. Sans push (Personal Team), c'est l'app qui met à jour ; l'option « Mise à jour écran verrouillé » la garde éveillée pendant la séance avec du silence audio mélangé (mode `audio`, OK pour un usage perso, refusé sur l'App Store).
+The server needs no change.
 
-Aucune modification du serveur n'est nécessaire.
+## Install on your iPhone
 
-## Installer sur l'iPhone
+1. Open `MotionX.xcodeproj` in Xcode.
+2. MotionX target › Signing & Capabilities: pick your Team (and change the bundle id `ch.perso.motionx` if it is already taken). Do the same for the MotionXWidgets target.
+3. Plug in the iPhone (Developer Mode enabled), select it as the destination, then press ⌘R.
+4. In the app, Settings tab: enter the server address, e.g. `192.168.1.10:3000`, then test it, save, and allow access to Health.
 
-1. Ouvrir `MotionX.xcodeproj` dans Xcode.
-2. Cible MotionX › Signing & Capabilities : choisir ton Team (et changer le bundle id `ch.perso.motionx` s'il est déjà pris).
-3. Brancher l'iPhone (mode développeur activé), le choisir comme destination, puis ⌘R.
-4. Dans l'app, onglet Réglages : saisir l'adresse du serveur, par ex. `192.168.1.10:3000`, puis Tester, Enregistrer et « Autoriser l'accès à Santé ».
-
-Avec un compte Apple gratuit, l'app doit être réinstallée tous les 7 jours (limite Apple) ; avec un compte développeur payant, c'est tous les ans.
+With a free Apple account, the app must be reinstalled every 7 days (Apple limit); with a paid developer account, once a year.
 
 ## Notes
 
-- HTTP en clair autorisé (ATS) pour joindre le NAS en local ; hors de chez toi, passer par un VPN (Tailscale, WireGuard…).
-- Les pas et calories en direct utilisent les mêmes formules que `server.js` (profil HEIGHT_CM / WEIGHT_KG lu sur le serveur).
+- Plain HTTP is allowed (ATS exception) to reach the server on the local network; away from home, go through a VPN (Tailscale, WireGuard…).
+- Live steps and calories use the same formulas as `server.js` (the HEIGHT_CM / WEIGHT_KG profile is read from the server).

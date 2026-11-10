@@ -19,7 +19,9 @@ An ESP32, a tiny self‑hosted server, your walks in Apple Health: no cloud, no 
 
 <br>
 
-![MotionX dashboard: live speed, daily totals and the history of every session](docs/images/dashboard.png)
+<p align="center">
+  <img src="docs/images/dashboard.gif" width="760" alt="MotionX dashboard during a walk: live speed, speed chart of the current session and daily totals">
+</p>
 
 Got a MotionX walking pad with no app and no stats? An **ESP32** hidden inside listens to the
 treadmill's internal bus, records every session, and sends it over Wi‑Fi to a small server on
