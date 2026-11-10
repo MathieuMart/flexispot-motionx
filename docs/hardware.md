@@ -28,6 +28,8 @@ The two boards are linked by the **J1 `CON`** cable: 5V / TRX / GND.
 
 ## Wiring
 
+![Console board: tap the middle wire (TRX) of the J1 cable through a 2.2 kΩ / 10 kΩ divider to ESP32 G34](images/wiring.jpg)
+
 ```
  J1 CON (console board)                         ESP32 DevKit
  ─────────────────────                          ────────────

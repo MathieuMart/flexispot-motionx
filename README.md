@@ -17,13 +17,7 @@ An ESP32 listens to the treadmill's internal bus, records every session, and sen
 
 ## How it works
 
-```
- treadmill console ──TRX bus──► ESP32 ──Wi‑Fi──► Node.js server (NAS / Docker) ──► dashboard (browser)
-   (HSM‑W02 board)   G34 input    │  UDP live      stores sessions as JSON
-                                  │  HTTP sessions        │
-                                  │                       └──► iOS Shortcut ──► Apple Health
-                                  └── web page http://motionx.local (status, settings, OTA update)
-```
+![Wiring on the console board (J1 cable, voltage divider to ESP32 G34) and data flow: treadmill console → ESP32 → Node.js server → dashboard and Apple Health](docs/images/wiring.jpg)
 
 ## Compatibility
 
