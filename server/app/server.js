@@ -29,6 +29,7 @@ const dgram = require('dgram');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const net = require('net');
 
 const PORT = Number(process.env.PORT) || 3000;
 const DATA_DIR = path.join(__dirname, 'data', 'sessions');
@@ -325,11 +326,18 @@ function readBody(req, limit = 2 * 1024 * 1024) {
 
 const stamp = () => new Date().toLocaleTimeString('en-GB');
 
-// A browser always sends Origin on a cross-site POST: it must name this very server
+// A browser always sends Origin on a cross-site POST: it must name this very server, under an address that
+// cannot be a DNS rebinding (a site pointing its own name at this server would otherwise pass the check):
+// an IP address, localhost, a .local name, or a name listed in ALLOWED_HOSTS (e.g. "nas.home,motionx.lan").
+const ALLOWED_HOSTS = String(process.env.ALLOWED_HOSTS || '').split(',').map(h => h.trim().toLowerCase()).filter(Boolean);
+function trustedHost(hostname) {
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  return h === 'localhost' || h.endsWith('.local') || net.isIP(h) !== 0 || ALLOWED_HOSTS.includes(h);
+}
 function sameOrigin(req) {
   const o = req.headers.origin;
   if (!o) return true;                                       // not a browser (curl, scripts)
-  try { return new URL(o).host === req.headers.host; } catch { return false; }
+  try { const u = new URL(o); return u.host === req.headers.host && trustedHost(u.hostname); } catch { return false; }
 }
 
 const server = http.createServer(async (req, res) => {

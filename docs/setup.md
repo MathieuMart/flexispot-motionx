@@ -45,6 +45,7 @@ Node 16 or later.
 | `WEIGHT_KG` | `75` | first value of the weight (calories); then changed in the dashboard settings |
 | `HEALTH_MIN_WALK_S` | `0` | sessions shorter than this are never offered to Apple Health (e.g. `120`) |
 | `TZ` | system | time zone for the dates sent to Apple Health |
+| `ALLOWED_HOSTS` | – | names you open the dashboard with, besides IP addresses, `localhost` and `.local` names (e.g. `nas.home`); needed to save the settings from such a name |
 
 Steps, calories and distance are **recomputed from the raw events** every time, so changing these values updates the whole history (but not what has already been written to Apple Health).
 
