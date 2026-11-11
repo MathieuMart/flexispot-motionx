@@ -325,6 +325,13 @@ function readBody(req, limit = 2 * 1024 * 1024) {
 
 const stamp = () => new Date().toLocaleTimeString('en-GB');
 
+// A browser always sends Origin on a cross-site POST: it must name this very server
+function sameOrigin(req) {
+  const o = req.headers.origin;
+  if (!o) return true;                                       // not a browser (curl, scripts)
+  try { return new URL(o).host === req.headers.host; } catch { return false; }
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   try {
@@ -368,6 +375,9 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && url.pathname === '/api/settings') return send(res, 200, settings);
     if (req.method === 'POST' && url.pathname === '/api/settings') {
+      // Only the dashboard served by this server may change the settings: a page of another site open in the
+      // same browser could otherwise post here, since every route answers Access-Control-Allow-Origin: *
+      if (!sameOrigin(req) || !/^application\/json\b/i.test(req.headers['content-type'] || '')) return send(res, 403, { error: 'settings can only be changed from the dashboard' });
       applySettings(JSON.parse(await readBody(req)));           // an invalid value is answered with HTTP 400 and its reason
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 1));
       console.log(`[${stamp()}] settings: ${JSON.stringify(settings)}`);

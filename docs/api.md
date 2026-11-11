@@ -59,7 +59,7 @@ Sent by `/api/status`, by UDP and by `POST /api/live`:
 | `GET /api/sessions` | all sessions with `computed` (distance, walk time, steps, kcal) and Health status, plus `settings` |
 | `GET /api/sessions/<file>` | one full session (`?raw` = the file as received, see *Pauses*) |
 | `GET /api/settings` | profile, daily goal and pause length |
-| `POST /api/settings` | change some of them (JSON, only the fields to change); HTTP 400 with the reason if a value is invalid |
+| `POST /api/settings` | change some of them (JSON, only the fields to change); HTTP 400 with the reason if a value is invalid. From a browser, only pages served by this server may call it (HTTP 403 otherwise) |
 | `GET /api/health/pending` | sessions to send to Apple Health (oldest first) |
 | `GET /api/health/done?file=…` | mark one as synced |
 | `GET /api/health/reset` | mark all as not synced |
