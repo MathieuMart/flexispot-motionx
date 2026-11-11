@@ -6,7 +6,7 @@ enum Estimator {
     static func strideMeters(_ kmh: Double, _ p: Profile) -> Double {
         let base = p.heightCm * 0.00414
         let factor = min(1.1, max(0.6, 0.6 + 0.08 * kmh))
-        return base * factor
+        return base * factor / (p.stepFactor ?? 1)
     }
 
     static func kcalPerMin(_ kmh: Double, _ p: Profile) -> Double {

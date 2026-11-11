@@ -22,4 +22,4 @@ With a free Apple account, the app must be reinstalled every 7 days (Apple limit
 ## Notes
 
 - Plain HTTP is allowed (ATS exception) to reach the server on the local network; away from home, go through a VPN (Tailscale, WireGuard…).
-- Live steps and calories use the same formulas as `server.js` (the HEIGHT_CM / WEIGHT_KG profile is read from the server).
+- Live steps and calories use the same formulas as `server.js` (the profile set in the dashboard settings is read from the server).

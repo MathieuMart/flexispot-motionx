@@ -103,7 +103,7 @@ struct LiveView: View {
                 StatTile(title: "Pace", value: live.speedKmh > 0 ? Fmt.hms(3600 / live.speedKmh) : "–", unit: "/km", systemImage: "speedometer", tint: .purple)
             }
             if !model.live.points.isEmpty {
-                SpeedChart(points: model.live.points, endMs: live.sessionMs)
+                SpeedChart(points: model.live.points, endMs: live.sessionMs, live: true)
                     .frame(height: 160)
                     .padding(.top, 4)
             }

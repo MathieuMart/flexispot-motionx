@@ -41,8 +41,8 @@ Node 16 or later.
 | Variable | Default | Effect |
 |---|---|---|
 | `PORT` | `3000` | HTTP **and** UDP port |
-| `HEIGHT_CM` | `175` | used to estimate stride length → steps |
-| `WEIGHT_KG` | `75` | used to estimate calories |
+| `HEIGHT_CM` | `175` | first value of the height (stride length → steps); then changed in the dashboard settings |
+| `WEIGHT_KG` | `75` | first value of the weight (calories); then changed in the dashboard settings |
 | `HEALTH_MIN_WALK_S` | `0` | sessions shorter than this are never offered to Apple Health (e.g. `120`) |
 | `TZ` | system | time zone for the dates sent to Apple Health |
 

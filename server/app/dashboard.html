@@ -23,6 +23,7 @@
   button{font:inherit;color:inherit}
   :focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:6px}
   .num{font-variant-numeric:tabular-nums}
+  [hidden]{display:none!important}
   .round{font-family:var(--round)}
 
   .page{min-height:100vh;padding:48px 20px 72px}
@@ -34,6 +35,9 @@
   h1{margin:6px 0 0;font-size:40px;font-weight:700;letter-spacing:-.025em}
   .pill{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:8px 16px}
   .pill strong{color:var(--fg);font-weight:500}
+  .head-r{display:flex;align-items:center;gap:10px}
+  .icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(255,255,255,.1);border-radius:50%;background:transparent;color:var(--mut);cursor:pointer}
+  .icon:hover{color:var(--fg);background:rgba(255,255,255,.04)}
   .dot{display:block;border-radius:50%;background:var(--green);animation:pulse 1.8s infinite}
   .dot.off{background:var(--dim);animation:none}
   @keyframes pulse{0%{box-shadow:0 0 0 0 oklch(0.8 0.2 150 / .55)}70%{box-shadow:0 0 0 10px oklch(0.8 0.2 150 / 0)}100%{box-shadow:0 0 0 0 oklch(0.8 0.2 150 / 0)}}
@@ -49,22 +53,29 @@
   .speed span{font-size:22px;font-weight:500;color:var(--mut)}
   .speed b.none{color:var(--dim)}
   .hero-chart{flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:10px}
-  .cap{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--mut)}
+  .cap{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap;min-height:26px;font-size:13px;color:var(--mut)}
+  .cap .r{display:flex;align-items:center;gap:12px}
 
   .chart{display:grid;grid-template-columns:minmax(0,1fr) 24px;gap:10px}
-  .plot{position:relative;height:200px}
+  .plot{position:relative;height:200px;touch-action:pan-y}
   .plot .g{position:absolute;left:0;right:0;border-top:1px solid rgba(255,255,255,.06)}
   .plot .g.base{border-top-color:var(--hair2)}
+  .plot .gv{position:absolute;top:0;bottom:0;border-left:1px solid rgba(255,255,255,.04)}
   .plot svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 10px oklch(0.8 0.2 150 / .45))}
   .plot .head{position:absolute;right:-5px;width:10px;height:10px;margin-top:-5px}
+  .plot .cur{position:absolute;top:0;bottom:0;width:1px;background:var(--hair2);pointer-events:none}
+  .plot .pin{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:var(--fg);pointer-events:none}
+  .tip{position:absolute;bottom:calc(100% + 6px);transform:translateX(-50%);z-index:1;pointer-events:none;white-space:nowrap;
+       background:#2C2C2E;border:1px solid var(--hair2);border-radius:8px;padding:4px 9px;font-size:12px;color:var(--mut)}
+  .tip b{color:var(--fg);font-weight:600}
   .plot .empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--mut)}
   .yax{position:relative;font-size:11px;color:var(--mut)}
-  .yax span{position:absolute;left:0}
-  .xax{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);padding-right:34px}
+  .yax span{position:absolute;left:0;transform:translateY(-50%)}
+  .xax{position:relative;height:14px;margin:8px 34px 0 0;font-size:11px;color:var(--mut)}
+  .xax span{position:absolute;top:0;white-space:nowrap}
 
-  .stats{display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
-  .stat{flex:1 1 160px;padding:20px 32px;display:flex;flex-direction:column;gap:4px}
-  .stat + .stat{border-left:1px solid var(--hair)}
+  .stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--hair);overflow:hidden}
+  .stat{padding:20px 28px;display:flex;flex-direction:column;gap:4px;box-shadow:-1px -1px 0 var(--hair)}   /* hairlines that survive wrapping */
   .stat small{font-size:13px;color:var(--mut)}
   .stat b{font-family:var(--round);font-size:30px;font-weight:600;white-space:nowrap}
   .unit{font-size:17px;font-weight:500;color:var(--mut);letter-spacing:0}
@@ -78,6 +89,38 @@
   .seg{display:flex;background:rgba(118,118,128,.24);border-radius:10px;padding:2px;gap:2px}
   .seg button{border:0;font-size:13px;font-weight:600;padding:7px 18px;border-radius:8px;cursor:pointer;background:transparent;color:var(--fg)}
   .seg button[aria-pressed="true"]{background:#636366}
+  .seg.sm{border-radius:8px}
+  .seg.sm button{font-size:12px;padding:4px 10px;border-radius:6px}
+
+  /* activity: daily goal and days */
+  .act{display:flex;flex-wrap:wrap;background:var(--card);border:1px solid var(--hair);border-radius:20px;overflow:hidden}
+  .goal{flex:0 0 auto;display:flex;align-items:center;gap:20px;padding:24px 28px;box-shadow:1px 0 0 var(--hair)}
+  .ring{position:relative;width:112px;height:112px;flex:none}
+  .ring svg{width:100%;height:100%}
+  .ring circle{fill:none;stroke-width:10}
+  .ring .trk{stroke:oklch(0.8 0.2 150 / .16)}               /* same hue as the fill, so the whole ring reads as one meter */
+  .ring .arc{stroke:var(--green);stroke-linecap:round;transition:stroke-dasharray .4s ease}
+  .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:24px;font-weight:600}
+  .gtxt{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--mut);min-width:128px}
+  .gtxt b{font-size:26px;font-weight:600;color:var(--fg);white-space:nowrap}
+  .gtxt .unit{font-size:15px}
+  .days{flex:1 1 320px;min-width:0;padding:34px 22px 18px 24px;border-radius:0 20px 20px 0}
+  .bars{display:flex;gap:10px}
+  .bplot{position:relative;flex:1;min-width:0;height:132px;touch-action:pan-y}
+  .bplot .g{position:absolute;left:0;right:0;height:0;border-top:1px solid rgba(255,255,255,.06)}
+  .bplot .g.base{border-top-color:var(--hair2)}
+  .bplot .gl{position:absolute;left:0;right:0;height:0;border-top:1px dashed rgba(255,255,255,.4)}
+  .cols{position:absolute;inset:0;display:flex}
+  .col{flex:1;min-width:0;display:flex;align-items:flex-end;justify-content:center;border-radius:6px 6px 0 0}
+  .col.on{background:rgba(255,255,255,.05)}
+  .bar{display:block;width:min(24px,68%);min-height:0;background:var(--green);border-radius:4px 4px 0 0}
+  .bar.low{background:oklch(0.8 0.2 150 / .42)}             /* goal not reached that day */
+  .col.on .bar{background:var(--green-hi)}
+  .days .yax{flex:none}
+  .days .yax .gt{color:var(--fg);font-weight:600}             /* the goal, on the axis in place of the ticks it would crowd */
+  .bx{display:flex;margin-top:8px;font-size:11px;color:var(--mut)}
+  .bx span{flex:1;min-width:0;text-align:center;white-space:nowrap}
+  .bx span.now{color:var(--fg);font-weight:600}
 
   .cums{display:flex;flex-wrap:wrap;gap:12px}
   .cum{flex:1 1 max(180px,22%);background:var(--card);border:1px solid var(--hair);border-radius:20px;padding:20px 22px;display:flex;flex-direction:column;gap:32px}
@@ -97,6 +140,7 @@
   .row .dist{font-family:var(--round);font-size:24px;font-weight:600;color:var(--green);white-space:nowrap}
   .row .dist small{font-size:15px;font-weight:500}
   .row .walk{font-size:15px;white-space:nowrap}
+  .row .pz{font-size:12px;color:var(--mut);white-space:nowrap}
   .row .kv{display:grid;grid-template-columns:repeat(4,64px);gap:20px}
   .row .kv b{display:block;font-size:16px;font-weight:600}
   .row .kv small{font-size:12px;color:var(--mut)}
@@ -123,22 +167,47 @@
   .note{margin:0;font-size:13px;line-height:1.6;color:var(--mut);padding:0 22px;max-width:75ch}
   .note code{font-family:ui-monospace,'SF Mono',Menlo,monospace;font-size:12px;color:var(--fg)}
 
+  /* settings */
+  dialog{width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--hair2);border-radius:24px;background:#161618;color:var(--fg)}
+  dialog:modal{overscroll-behavior:contain}
+  dialog::backdrop{background:rgba(0,0,0,.62);overflow:hidden;overscroll-behavior:contain}
+  dialog form{display:flex;flex-direction:column;gap:18px;padding:26px}
+  dialog h2{font-size:22px}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+  .field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:500}
+  .field input,.field select{font:inherit;font-size:16px;font-weight:400;color:inherit;width:100%;min-width:0;background:#0B0B0C;border:1px solid var(--hair2);border-radius:10px;padding:9px 12px}
+  .hint{margin:0;font-size:12px;font-weight:400;line-height:1.5;color:var(--mut)}
+  .err{margin:0;font-size:13px;color:var(--pink)}
+  .err:empty{display:none}
+  .acts{display:flex;justify-content:flex-end;gap:10px}
+  .btn{border:1px solid var(--hair2);background:transparent;border-radius:999px;padding:9px 20px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn:hover{background:rgba(255,255,255,.05)}
+  .btn.pri{background:var(--green);border-color:transparent;color:#000}
+  .btn.pri:hover{background:var(--green-hi)}
+
+  @media (max-width:900px){                                   /* stats on two rows: time and distance, then the rest */
+    .stats{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .stat{grid-column:span 2}
+    .stat:nth-child(-n+2){grid-column:span 3}
+  }
   @media (max-width:620px){
     .page{padding-top:32px}
     .speed b{font-size:96px}
     .hero-top{padding:24px 22px 22px}
-    .stat{padding:16px 22px}
     .row .kv{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:100%}
     .row .end{margin-left:0}
     .health{min-width:0;text-align:left}
-    .stat{flex:1 1 0;min-width:0;padding:14px 16px}
+    .stat{padding:14px 16px}
     .stat b{font-size:22px}
     .stat .unit{font-size:14px}
     .cum{flex:1 1 calc(50% - 6px);gap:18px;padding:16px 18px}
+    .goal{flex:1 1 100%;padding:20px 22px;box-shadow:0 1px 0 var(--hair)}
+    .days{padding:34px 16px 16px 18px}
     .cum b{font-size:30px}
   }
   @media (prefers-reduced-motion:reduce){
     .dot{animation:none}
+    .ring .arc{transition:none}
     .chev{transition:none}
   }
 </style>
@@ -151,11 +220,16 @@
       <div class="date" id="today"></div>
       <h1>MotionX</h1>
     </div>
-    <div class="pill" aria-live="polite">
-      <span class="dot off" id="pdot" style="width:8px;height:8px"></span>
-      <strong id="pstate">Connecting…</strong>
-      <span id="plinkwrap" hidden>·</span>
-      <a id="plink" href="#" target="_blank" rel="noopener" hidden>device page</a>
+    <div class="head-r">
+      <div class="pill" aria-live="polite">
+        <span class="dot off" id="pdot" style="width:8px;height:8px"></span>
+        <strong id="pstate">Connecting…</strong>
+        <span id="plinkwrap" hidden>·</span>
+        <a id="plink" href="#" target="_blank" rel="noopener" hidden>device page</a>
+      </div>
+      <button class="icon" id="openSet" type="button" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h6M16 18h4"/><circle cx="15" cy="6" r="2.5"/><circle cx="9" cy="12" r="2.5"/><circle cx="13" cy="18" r="2.5"/></svg>
+      </button>
     </div>
   </header>
 
@@ -166,14 +240,51 @@
         <div class="speed round num"><b id="speed" class="none">0.0</b><span>km/h</span></div>
       </div>
       <div class="hero-chart">
-        <div class="cap"><span id="ccap">Speed</span><span class="num" id="cmax"></span></div>
+        <div class="cap">
+          <span id="ccap">Speed</span>
+          <span class="r">
+            <span class="num" id="cmax"></span>
+            <span class="seg sm" role="group" aria-label="Chart time range" id="wseg" hidden>
+              <button data-w="600" aria-pressed="false">10 min</button>
+              <button data-w="1800" aria-pressed="false">30 min</button>
+              <button data-w="0" aria-pressed="true">All</button>
+            </span>
+          </span>
+        </div>
         <div id="heroChart"></div>
       </div>
     </div>
     <div class="stats">
-      <div class="stat"><small>Session</small><b class="num" id="sEl">–</b></div>
-      <div class="stat"><small>Walking</small><b class="num" id="sWk">–</b></div>
+      <div class="stat"><small>Time</small><b class="num" id="sWk">–</b></div>
       <div class="stat"><small>Distance</small><b class="num" id="sDi">–</b></div>
+      <div class="stat"><small>Calories</small><b class="num" id="sKc">–</b></div>
+      <div class="stat"><small>Steps</small><b class="num" id="sSt">–</b></div>
+      <div class="stat"><small>Avg speed</small><b class="num" id="sAv">–</b></div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="hact">
+    <div class="sec-head">
+      <div><h2 id="hact">Activity</h2><span class="sub" id="actSub"></span></div>
+      <div class="seg" role="group" aria-label="Days shown">
+        <button data-r="7" aria-pressed="true">7 days</button>
+        <button data-r="30" aria-pressed="false">30 days</button>
+      </div>
+    </div>
+    <div class="act">
+      <div class="goal" id="goal" hidden>
+        <div class="ring" id="gring" role="progressbar" aria-label="Daily goal" aria-valuemin="0" aria-valuemax="100">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="arc" id="garc" cx="60" cy="60" r="50" pathLength="100" transform="rotate(-90 60 60)"/></svg>
+          <b class="round" id="gpct">0%</b>
+        </div>
+        <div class="gtxt">
+          <span>Today’s goal</span>
+          <b class="round" id="gval">–</b>
+          <span id="gleft"></span>
+          <span id="gstreak"></span>
+        </div>
+      </div>
+      <div class="days" id="days" tabindex="0" role="group" aria-label="Activity per day. Use the left and right arrow keys to read each day."></div>
     </div>
   </section>
 
@@ -210,6 +321,30 @@
 
 </div></div>
 
+<dialog id="setDlg" closedby="any" aria-labelledby="setTitle">
+  <form id="setForm">
+    <h2 id="setTitle">Settings</h2>
+    <div class="pair">
+      <label class="field">Height (cm)<input name="height_cm" type="number" inputmode="numeric" min="100" max="230" step="1" required></label>
+      <label class="field">Weight (kg)<input name="weight_kg" type="number" inputmode="decimal" min="30" max="250" step="0.1" required></label>
+    </div>
+    <label class="field">Step calibration (%)<input name="step_pct" type="number" inputmode="numeric" min="50" max="200" step="1" required>
+      <span class="hint">Steps are estimated from speed and height. If your watch counts 5% more steps than this page, enter 105.</span></label>
+    <div class="pair">
+      <label class="field">Daily goal<select name="goal_type"><option value="walk_min">Walking (min)</option><option value="distance_km">Distance (km)</option><option value="steps">Steps</option></select></label>
+      <label class="field">Target<input name="goal_value" type="number" inputmode="decimal" min="0" max="100000" step="any" required><span class="hint">0 = no goal</span></label>
+    </div>
+    <label class="field">Pause that keeps the same session (min)<input name="merge_min" type="number" inputmode="numeric" min="0" max="60" step="1" required>
+      <span class="hint">Stopping the treadmill for less than this continues the same session. 0 = every start is a new session.</span></label>
+    <p class="hint">Steps and calories of past sessions are recalculated with these values. Sessions already in Health keep theirs.</p>
+    <p class="err" id="setErr" role="alert"></p>
+    <div class="acts">
+      <button type="button" class="btn" id="setCancel">Cancel</button>
+      <button type="submit" class="btn pri" autofocus>Save</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 // ---------------------------------------------------------------- utilities
 const $ = id => document.getElementById(id);
@@ -225,34 +360,117 @@ const STATES = { 0: 'Starting up', 1: 'Standby', 2: 'Countdown', 3: 'Walking', 5
 $('today').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
 // ---------------------------------------------------------------- speed chart (stair steps)
-// events = [[ms, state, speed×10], ...]   T = duration in ms
-function chartHTML(events, T, opts = {}){
-  T = Math.max(1000, T);
-  const top = Math.max(2, Math.ceil(Math.max(0, ...events.map(e => e[2])) / 10));
-  const X = t => (Math.min(t, T) / T * 1000).toFixed(1), Y = v => (200 - (v / 10) / top * 200).toFixed(1);
-  let d = 'M0 ' + Y(0), last = 0;
-  for (const [t, , v] of events){ d += ' L' + X(t) + ' ' + Y(last) + ' L' + X(t) + ' ' + Y(v); last = v; }
-  d += ' L1000 ' + Y(last);
-  const mid = top / 2, lbl = v => Number.isInteger(v) ? v : v.toFixed(1);
-  const id = 'f' + Math.random().toString(36).slice(2, 8);
-  const headTop = (200 - (last / 10) / top * 200) / 2;          // in % of the height
-  return '<div class="chart"><div class="plot">' +
-    '<div class="g" style="top:0"></div><div class="g" style="top:50%"></div><div class="g base" style="bottom:0"></div>' +
-    (events.length ? '<svg viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0" stop-color="oklch(0.8 0.2 150)" stop-opacity=".32"/><stop offset="1" stop-color="oklch(0.8 0.2 150)" stop-opacity="0"/></linearGradient></defs>' +
-      '<path d="' + d + ' L1000 200 L0 200 Z" fill="url(#' + id + ')"/>' +
-      '<path d="' + d + '" fill="none" stroke="oklch(0.8 0.2 150)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>' +
-      (opts.head ? '<span class="dot head" style="top:' + headTop + '%"></span>' : '')
-      : '<div class="empty">' + esc(opts.empty || 'No data') + '</div>') +
-    '</div><div class="yax num"><span style="top:-7px">' + lbl(top) + '</span><span style="top:calc(50% - 7px)">' + lbl(mid) + '</span><span style="bottom:-7px">0</span></div></div>' +
-    '<div class="xax num"><span>0:00</span><span>' + dur(T / 1000) + '</span></div>';
+// events = [[ms, state, speed×10], ...]
+// The vertical axis zooms on the speeds that were really walked, so that going from 3.0 to 3.5 km/h stays
+// readable on a one-hour session; the start and stop ramps simply leave through the bottom of the chart.
+const GREEN = 'oklch(0.8 0.2 150)', HOLD_MS = 5000;
+let chartSeq = 0;
+
+function speedScale(events, t0, t1, live){
+  let lo = Infinity, hi = 0, cur = 0;
+  events.forEach(([t, st, s], i) => {
+    const last = i + 1 === events.length;
+    const a = Math.max(t, t0), b = Math.min(last ? t1 : events[i + 1][0], t1), v = s / 10;
+    if (b <= a || v <= 0) return;
+    hi = Math.max(hi, v);
+    if (b - a >= HOLD_MS) lo = Math.min(lo, v);                // a speed that was held: ramp steps last a fraction of a second
+    else if (live && last && st === 3) cur = v;                // the speed being walked right now always stays in view
+  });
+  if (!hi) return { lo: 0, hi: 2, step: 1 };
+  if (lo > hi) lo = 0; else if (cur) lo = Math.min(lo, cur);   // nothing held yet: plain 0-based axis
+  let a = lo - Math.max(0.2, (hi - lo) * 0.1), b = hi;
+  if (b - a < 1){ const m = (a + b) / 2; a = m - 0.5; b = m + 0.5; }
+  if (a < 1) a = 0;
+  const step = b - a <= 2 ? 0.5 : b - a <= 5 ? 1 : 2;
+  return { lo: Math.floor(a / step + 1e-9) * step, hi: Math.ceil(b / step - 1e-9) * step, step };
+}
+
+// Builds a chart in `host` once; set() then only updates it, so that the pointer readout survives the refreshes.
+//   set(events, T, { window: ms shown at the end (0 = everything), live: true while walking, empty: message })
+function createChart(host){
+  const id = 'c' + (++chartSeq);
+  host.innerHTML = '<div class="chart"><div class="plot"><div class="grid"></div>' +
+    '<svg viewBox="0 0 1000 200" preserveAspectRatio="none" aria-hidden="true"><defs>' +
+      '<linearGradient id="' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + GREEN + '" stop-opacity=".32"/><stop offset="1" stop-color="' + GREEN + '" stop-opacity="0"/></linearGradient>' +
+      '<clipPath id="' + id + 'k"><rect x="-5" y="-20" width="1010" height="224"/></clipPath></defs>' +
+      '<g clip-path="url(#' + id + 'k)"><path class="area" fill="url(#' + id + ')"/>' +
+      '<path class="line" fill="none" stroke="' + GREEN + '" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></g></svg>' +
+    '<i class="cur" hidden></i><span class="pin" hidden></span><span class="dot head" hidden></span>' +
+    '<div class="tip num" hidden></div><div class="empty" hidden></div>' +
+    '</div><div class="yax num"></div></div><div class="xax num"></div>';
+  const q = sel => host.querySelector(sel);
+  const plot = q('.plot'), grid = q('.grid'), area = q('.area'), line = q('.line'), head = q('.head'),
+        cur = q('.cur'), pin = q('.pin'), tip = q('.tip'), empty = q('.empty'), yax = q('.yax'), xax = q('.xax');
+  let ev = [], t0 = 0, t1 = 1000, sc = { lo: 0, hi: 2, step: 1 }, hover = null, hideT = 0, drawn = '';
+  const yPct = v => (sc.hi - v) / (sc.hi - sc.lo) * 100;       // % from the top; above 100 = below the axis
+
+  function drawHover(){
+    const on = hover !== null && ev.length > 0;
+    cur.hidden = pin.hidden = tip.hidden = !on;
+    if (!on) return;
+    const t = t0 + hover * (t1 - t0);
+    let v = 0;
+    for (const e of ev){ if (e[0] > t) break; v = e[2] / 10; }
+    cur.style.left = pin.style.left = hover * 100 + '%';
+    pin.style.top = Math.min(100, yPct(v)) + '%';
+    tip.innerHTML = '<b>' + v.toFixed(1) + ' km/h</b> · ' + dur(t / 1000);
+    const w = plot.clientWidth, half = tip.offsetWidth / 2;
+    tip.style.left = Math.max(half, Math.min(w - half, hover * w)) + 'px';
+  }
+  const point = e => { clearTimeout(hideT); const r = plot.getBoundingClientRect(); hover = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)); drawHover(); };
+  const leave = () => { hover = null; drawHover(); };
+  plot.addEventListener('pointerdown', point);
+  plot.addEventListener('pointermove', point);
+  plot.addEventListener('pointerleave', e => { clearTimeout(hideT); if (e.pointerType === 'mouse') leave(); else hideT = setTimeout(leave, 2500); });  // a finger lifts at once: keep the readout a moment
+
+  function set(events, T, o = {}){
+    ev = events; t1 = Math.max(1000, T); t0 = o.window ? Math.max(0, t1 - o.window) : 0;
+    sc = speedScale(ev, t0, t1, o.live);
+    const X = t => ((t - t0) / (t1 - t0) * 1000).toFixed(1), Y = s => Math.min(215, yPct(s / 10) * 2).toFixed(1);
+    let v = 0, from = null, d = '';
+    for (const [t, , s] of ev){
+      if (t > t1) break;
+      if (t > t0){ if (from === null) from = v; d += ' L' + X(t) + ' ' + Y(v) + ' L' + X(t) + ' ' + Y(s); }
+      v = s;
+    }
+    d = 'M0 ' + Y(from === null ? v : from) + d + ' L1000 ' + Y(v);
+    const has = ev.length > 0;
+    line.setAttribute('d', has ? d : '');
+    area.setAttribute('d', has ? d + ' L1000 215 L0 215 Z' : '');
+    empty.hidden = has; empty.textContent = o.empty || 'No data';
+    head.hidden = !(has && o.live); head.style.top = Math.max(0, Math.min(100, yPct(v / 10))) + '%';
+
+    let g = '', yl = '';
+    for (let k = sc.lo; k <= sc.hi + 1e-9; k += sc.step){
+      const p = yPct(k);
+      g += '<div class="g' + (k === 0 ? ' base' : '') + '" style="top:' + p + '%"></div>';
+      yl += '<span style="top:' + p + '%">' + (Number.isInteger(k) ? k : k.toFixed(1)) + '</span>';
+    }
+    const span = (t1 - t0) / 1000, every = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600].find(n => span / n <= 6) || 7200;
+    let xl = '<span style="left:0">' + dur(t0 / 1000) + '</span><span style="right:0">' + dur(t1 / 1000) + '</span>';
+    for (let t = Math.ceil(t0 / 1000 / every) * every; has && t < t1 / 1000; t += every){
+      const f = (t - t0 / 1000) / span;
+      if (f < 0.1 || f > 0.84) continue;                       // leave room for the two end labels
+      g += '<div class="gv" style="left:' + f * 100 + '%"></div>';
+      xl += '<span style="left:' + f * 100 + '%;transform:translateX(-50%)">' + dur(t) + '</span>';
+    }
+    if (g !== drawn){ grid.innerHTML = drawn = g; yax.innerHTML = yl; }
+    xax.innerHTML = xl;
+    drawHover();
+  }
+  return { set };
 }
 
 // ---------------------------------------------------------------- state
 let live = null, trace = { session_id: 0, events: [] }, streamOk = false;
-let sessions = [], profile = null, minWalk = 0;
+let sessions = [], settings = null, minWalk = 0;
+let range = 7, daySel = null, dayData = [], daysDrawn = '';   // activity chart: days shown, day being read
 let period = 'day', view = 'list', shown = 25, open = new Set();
-try { view = localStorage.getItem('motionx-view') || 'list'; period = localStorage.getItem('motionx-period') || 'day'; } catch {}
+let chartWin = 0;                 // seconds shown on the live chart, 0 = the whole session
+let walkNow = null;               // counters of the session in progress, added to the totals until the server lists it
+try { view = localStorage.getItem('motionx-view') || 'list'; period = localStorage.getItem('motionx-period') || 'day';
+      chartWin = Number(localStorage.getItem('motionx-window')) || 0; range = Number(localStorage.getItem('motionx-range')) === 30 ? 30 : 7; } catch {}
+const heroChart = createChart($('heroChart'));
 
 // ---------------------------------------------------------------- main card
 function renderHero(){
@@ -276,26 +494,124 @@ function renderHero(){
   $('speed').textContent = signal ? l.speed_kmh.toFixed(1) : '0.0';
   $('speed').className = signal ? '' : 'none';
 
+  $('wseg').hidden = !active;
   if (active){
-    const extra = (now - l.received_at) / 1000;                 // the counter keeps running between two packets
-    const moving = l.speed_kmh > 0;
-    $('sEl').textContent = dur(l.elapsed_s + extra);
-    $('sWk').textContent = dur(l.walk_s + (moving ? extra : 0));
-    $('sDi').innerHTML = km(l.distance_m + (moving ? l.speed_kmh / 3.6 * extra : 0)) + unit('km');
-    const T = (l.session_ms || 0) + extra * 1000;
-    const vmax = Math.max(0, ...trace.events.map(e => e[2])) / 10;
-    $('ccap').textContent = 'Speed · current session';
+    const extra = (now - l.received_at) / 1000;                 // the counters keep running between two packets
+    const moving = l.speed_kmh > 0, e = l.est || {}, same = walkNow && walkNow.live && walkNow.id === l.session_id;
+    const c = l.carry || { walk_s: 0, distance_m: 0, steps: 0, kcal: 0 };   // walked before a short pause: the same walk goes on
+    const walk = l.walk_s + (moving ? extra : 0), dist = l.distance_m + (moving ? l.speed_kmh / 3.6 * extra : 0);
+    let steps = (e.steps || 0) + (e.steps_per_min || 0) * extra / 60, kcal = (e.kcal || 0) + (e.kcal_per_h || 0) * extra / 3600;
+    if (same){ steps = Math.max(steps, walkNow.p); kcal = Math.max(kcal, walkNow.k); }   // an estimate never counts backwards
+    walkNow = { live: true, merges: Boolean(l.carry), id: l.session_id, start: now / 1000 - l.elapsed_s, d: dist, w: walk, p: steps, k: kcal };
+    const tw = c.walk_s + walk, td = c.distance_m + dist;
+    $('sWk').textContent = dur(tw);
+    $('sDi').innerHTML = km(td) + unit('km');
+    $('sKc').innerHTML = nf.format(Math.round(c.kcal + kcal)) + unit('kcal');
+    $('sSt').textContent = nf.format(Math.round(c.steps + steps));
+    $('sAv').innerHTML = (tw >= 5 ? (td / tw * 3.6).toFixed(1) : '–') + unit('km/h');
+    const vmax = Math.max(0, ...trace.events.map(p => p[2])) / 10;
+    $('ccap').textContent = l.carry ? 'Speed · since the pause' : 'Speed · current session';
     $('cmax').textContent = vmax ? 'max ' + vmax.toFixed(1) + ' km/h' : '';
-    $('heroChart').innerHTML = chartHTML(trace.events, T, { head: true, empty: 'Starting…' });
+    document.querySelectorAll('[data-w]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.w) === chartWin));
+    heroChart.set(trace.events, (l.session_ms || 0) + extra * 1000, { live: true, window: chartWin * 1000, empty: 'Starting…' });
   } else {                                                      // idle: nothing to display, the last session is in the list
-    $('sEl').textContent = $('sWk').textContent = '0:00';
+    if (walkNow && walkNow.live){ walkNow.live = false; walkNow.until = now + 30000; }   // just ended: bridges the few seconds before the upload
+    else if (walkNow && now > walkNow.until) walkNow = null;
+    $('sWk').textContent = '0:00';
     $('sDi').innerHTML = '0.000' + unit('km');
+    $('sKc').innerHTML = '0' + unit('kcal');
+    $('sSt').textContent = '0';
+    $('sAv').innerHTML = '–' + unit('km/h');
     $('ccap').textContent = 'Speed'; $('cmax').textContent = '';
-    const msg = !l ? 'Waiting for the ESP32' : !online ? 'The ESP32 is not responding' : !l.signal ? 'Turn on the treadmill' : 'Start walking to see the chart';
-    if ($('heroChart').dataset.msg !== msg){ $('heroChart').innerHTML = chartHTML([], 60000, { empty: msg }); $('heroChart').dataset.msg = msg; }
-    return;
+    heroChart.set([], 60000, { empty: !l ? 'Waiting for the ESP32' : !online ? 'The ESP32 is not responding' : !l.signal ? 'Turn on the treadmill' : 'Start walking to see the chart' });
   }
-  delete $('heroChart').dataset.msg;
+  if (walkNow){ renderTotals(); renderActivity(); }
+}
+
+// ---------------------------------------------------------------- activity: daily goal and days
+const GOALS = {            // of: value of a session · fmt: a value reached (rounded down, a goal is never shown reached early) · left: what remains
+  walk_min:    { unit: 'min',   of: c => c.walk_s / 60,       fmt: v => String(Math.floor(v + 1e-6)),                         left: v => String(Math.ceil(v - 1e-6)) },
+  distance_km: { unit: 'km',    of: c => c.distance_m / 1000, fmt: v => (Math.floor(v * 100 + 1e-6) / 100).toFixed(2),        left: v => (Math.ceil(v * 100 - 1e-6) / 100).toFixed(2) },
+  steps:       { unit: 'steps', of: c => c.steps,             fmt: v => nf.format(Math.floor(v + 1e-6)),                      left: v => nf.format(Math.ceil(v - 1e-6)) },
+};
+function niceScale(v){     // round ticks, at most 4 steps up to a top that holds v
+  const p = 10 ** Math.floor(Math.log10(v)), step = [0.25, 0.5, 1, 2.5, 5, 10].map(m => m * p).find(x => v / x <= 4);
+  return { step, top: Math.ceil(v / step - 1e-9) * step };
+}
+
+function renderActivity(){
+  if (!settings) return;
+  document.querySelectorAll('[data-r]').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.r) === range));
+  const g = GOALS[settings.goal_type] || GOALS.walk_min, goal = settings.goal_value, now = new Date(), vals = new Map();
+  const add = (t, c) => { const k = dayKey(new Date(t * 1000)); vals.set(k, (vals.get(k) || 0) + g.of(c)); };
+  sessions.forEach(s => add(s.start, s.computed));
+  if (walkNow) add(now / 1000, { walk_s: walkNow.w, distance_m: walkNow.d, steps: walkNow.p });   // the walk in progress counts for today
+  const day = i => new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);                // i days ago
+  const val = i => vals.get(dayKey(day(i))) || 0, met = i => goal > 0 && val(i) >= goal - 1e-6;
+
+  // today's goal
+  $('goal').hidden = !(goal > 0);
+  if (goal > 0){
+    const today = val(0), pct = Math.floor(today / goal * 100 + 1e-6);
+    let streak = 0;
+    for (let i = met(0) ? 0 : 1; met(i); i++) streak++;                                           // today only breaks a streak once it is over
+    $('garc').style.strokeDasharray = Math.min(100, today / goal * 100) + ' 100';
+    $('garc').style.visibility = today > 0 ? '' : 'hidden';
+    $('gring').setAttribute('aria-valuenow', Math.min(100, pct));
+    $('gpct').textContent = pct + '%';
+    $('gval').innerHTML = g.fmt(today) + unit('/ ' + g.fmt(goal) + ' ' + g.unit);
+    $('gleft').textContent = met(0) ? 'Goal reached' : g.left(goal - today) + ' ' + g.unit + ' to go';
+    $('gstreak').textContent = streak ? streak + '-day streak' : 'No streak yet';
+  }
+
+  // one bar per day, oldest first
+  dayData = Array.from({ length: range }, (_, k) => { const i = range - 1 - k; return { date: day(i), v: val(i), met: met(i), text: g.fmt(val(i)) + ' ' + g.unit }; });
+  const reached = dayData.filter(a => a.met).length;
+  $('actSub').textContent = goal > 0 ? 'Goal reached ' + reached + ' of the last ' + range + ' days' : 'Last ' + range + ' days';
+  const sc = niceScale(Math.max(goal, ...dayData.map(a => a.v)) || 1), pos = v => (v / sc.top * 100).toFixed(2) + '%';
+  const tick = k => k >= 10000 ? k / 1000 + 'K' : nf.format(Number(k.toFixed(2)));
+  const label = (k, cls) => { wide = Math.max(wide, tick(k).length); return '<span' + (cls ? ' class="' + cls + '"' : '') + ' style="top:' + (100 - k / sc.top * 100) + '%">' + tick(k) + '</span>'; };
+  let grid = '', wide = 1, yl = goal > 0 ? label(goal, 'gt') : '';
+  for (let k = 0; k <= sc.top + 1e-9; k += sc.step){
+    grid += '<div class="g' + (k === 0 ? ' base' : '') + '" style="bottom:' + pos(k) + '"></div>';
+    if (!(goal > 0) || Math.abs(k - goal) / sc.top > 0.13) yl += label(k);
+  }
+  const yw = wide * 6.5 + 2, every = range > 7 ? 5 : 1;
+  const h = '<div class="bars"><div class="bplot">' + grid + (goal > 0 ? '<div class="gl" style="bottom:' + pos(goal) + '"></div>' : '') +
+    '<div class="cols">' + dayData.map(a => '<div class="col"><i class="bar' + (goal > 0 && !a.met ? ' low' : '') + '" style="height:' + pos(a.v) + (a.v > 0 ? ';min-height:2px' : '') + '"></i></div>').join('') + '</div>' +
+    '<div class="tip num" role="status" hidden></div></div><div class="yax num" style="width:' + yw + 'px">' + yl + '</div></div>' +
+    '<div class="bx num" style="margin-right:' + (yw + 10) + 'px">' + dayData.map((a, k) => { const last = k === range - 1;
+      return '<span' + (last ? ' class="now"' : '') + '>' + ((range - 1 - k) % every ? '' : range > 7 ? a.date.getDate() : a.date.toLocaleDateString('en-GB', { weekday: 'short' })) + '</span>'; }).join('') + '</div>';
+  if (h !== daysDrawn) $('days').innerHTML = daysDrawn = h;
+  drawDay();
+}
+
+// Readout of one day of the activity chart (pointer or arrow keys); the whole column is the target, not the bar
+function drawDay(){
+  const box = $('days'), tip = box.querySelector('.tip'), cols = box.querySelectorAll('.col'), a = dayData[daySel];
+  cols.forEach((c, k) => c.classList.toggle('on', k === daySel));
+  if (!tip) return;
+  tip.hidden = !a;
+  if (!a) return;
+  const b = document.createElement('b');
+  b.textContent = a.text;
+  tip.replaceChildren(b, ' · ' + a.date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) + (a.met ? ' · goal reached' : ''));
+  const w = tip.parentNode.clientWidth, half = tip.offsetWidth / 2;
+  tip.style.left = Math.max(half, Math.min(w - half, (daySel + 0.5) / dayData.length * w)) + 'px';
+}
+{
+  const box = $('days'), pick = i => { if (i !== daySel){ daySel = i; drawDay(); } };
+  let hideT = 0;
+  const point = e => { clearTimeout(hideT); const r = box.querySelector('.cols').getBoundingClientRect(), i = Math.floor((e.clientX - r.left) / r.width * dayData.length); pick(i >= 0 && i < dayData.length ? i : null); };
+  box.addEventListener('pointerdown', point);
+  box.addEventListener('pointermove', point);
+  box.addEventListener('pointerleave', e => { clearTimeout(hideT); if (e.pointerType === 'mouse') pick(null); else hideT = setTimeout(() => pick(null), 2500); });
+  box.addEventListener('focus', () => { if (box.matches(':focus-visible')) pick(dayData.length - 1); });
+  box.addEventListener('blur', () => pick(null));
+  box.addEventListener('keydown', e => {
+    const d = { ArrowLeft: -1, ArrowRight: 1 }[e.key];
+    if (d){ e.preventDefault(); pick(Math.max(0, Math.min(dayData.length - 1, (daySel === null ? dayData.length - 1 : daySel) + d))); }
+  });
 }
 
 // ---------------------------------------------------------------- totals
@@ -305,12 +621,13 @@ function renderTotals(){
   const from = period === 'day' ? day0 : period === 'week' ? day0 - 6 * 86400 : 0;
   const list = sessions.filter(s => s.start >= from);
   const t = list.reduce((a, s) => ({ d: a.d + s.computed.distance_m, w: a.w + s.computed.walk_s, p: a.p + s.computed.steps, k: a.k + s.computed.kcal }), { d: 0, w: 0, p: 0, k: 0 });
-  const label = { day: 'Today', week: 'Last 7 days', all: 'All time' }[period];
-  $('cumSub').textContent = label + ' · ' + list.length + ' session' + (list.length === 1 ? '' : 's');
+  if (walkNow){ t.d += walkNow.d; t.w += walkNow.w; t.p += walkNow.p; t.k += walkNow.k; }   // the walk in progress counts too
+  const label = { day: 'Today', week: 'Last 7 days', all: 'All time' }[period], n = list.length + (walkNow && !walkNow.merges ? 1 : 0);   // after a short pause it is a session already listed
+  $('cumSub').textContent = label + ' · ' + n + ' session' + (n === 1 ? '' : 's') + (walkNow && walkNow.live ? (n === 1 ? ' (in progress)' : ' (1 in progress)') : '');
   $('cDi').innerHTML = km(t.d) + unit('km');
   $('cWk').textContent = dur(t.w);
-  $('cSt').innerHTML = nf.format(t.p) + unit('steps');
-  $('cKc').innerHTML = nf.format(t.k) + unit('kcal');
+  $('cSt').innerHTML = nf.format(Math.round(t.p)) + unit('steps');
+  $('cKc').innerHTML = nf.format(Math.round(t.k)) + unit('kcal');
 }
 
 // ---------------------------------------------------------------- sessions
@@ -320,7 +637,8 @@ function rowHTML(s){
   const c = s.computed, d = new Date(s.start * 1000), [cls, txt] = healthLabel(s), isOpen = open.has(s.file);
   return '<div class="item"><button class="row" data-f="' + esc(s.file) + '" aria-expanded="' + isOpen + '">' +
     '<span class="time num">' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + (s.start_estimated ? '≈' : '') + '</span>' +
-    '<span class="main"><span class="dist num">' + km(c.distance_m) + '<small> km</small></span><span class="walk num">' + dur(c.walk_s) + '</span></span>' +
+    '<span class="main"><span class="dist num">' + km(c.distance_m) + '<small> km</small></span><span class="walk num">' + dur(c.walk_s) + '</span>' +
+      (s.parts ? '<span class="pz">' + (s.parts.length - 1) + ' pause' + (s.parts.length > 2 ? 's' : '') + '</span>' : '') + '</span>' +
     '<span class="kv num">' +
       '<span><b>' + nf.format(c.steps) + '</b><small>steps</small></span>' +
       '<span><b>' + c.kcal + '</b><small>kcal</small></span>' +
@@ -381,8 +699,8 @@ async function loadDetail(file){
   try{
     const s = await fetchSession(file), el = document.getElementById('d-' + file);
     if (!el) return;
-    el.innerHTML = '<div class="cap"><span>Speed · ' + dur(s.duration_s || 0) + ' total</span><span class="num">max ' + (s.max_kmh || 0).toFixed(1) + ' km/h</span></div>' +
-      chartHTML(s.events || [], (s.duration_s || 1) * 1000);
+    el.innerHTML = '<div class="cap"><span>Speed · ' + dur(s.duration_s || 0) + ' total' + (s.pause_s ? ', ' + dur(s.pause_s) + ' paused' : '') + '</span><span class="num">max ' + (s.max_kmh || 0).toFixed(1) + ' km/h</span></div><div></div>';
+    createChart(el.lastChild).set(s.events || [], (s.duration_s || 1) * 1000);
   }catch(e){ const el = document.getElementById('d-' + file); if (el) el.innerHTML = '<div class="empty-state" style="padding:0">Couldn\u2019t load this session.</div>'; }
 }
 
@@ -390,11 +708,13 @@ async function loadDetail(file){
 async function refreshSessions(){
   try{
     const data = await (await fetch('/api/sessions')).json();
-    sessions = data.sessions; profile = data.profile; minWalk = data.health_min_walk_s || 0;
-    $('note').innerHTML = 'Steps and calories are estimated by the server from speed (profile ' + profile.height_cm + ' cm, ' + profile.weight_kg + ' kg).' +
+    sessions = data.sessions; settings = data.settings; minWalk = data.health_min_walk_s || 0;
+    if (walkNow && !walkNow.live && sessions.some(s => (s.ids || [s.id]).includes(walkNow.id) && s.start + (s.duration_s || 0) > walkNow.start - 300)) walkNow = null;   // now in the list
+    $('note').innerHTML = 'Steps and calories are estimated by the server from speed (profile ' + settings.height_cm + ' cm, ' + settings.weight_kg + ' kg' +
+      (settings.step_factor !== 1 ? ', steps × ' + settings.step_factor : '') + ').' +
       (minWalk ? ' Sessions shorter than ' + dur(minWalk) + ' are not sent to Health.' : '') +
       ' Raw files are in <code>data/sessions/</code>.';
-    renderTotals(); renderSessions(); renderHero();
+    renderTotals(); renderActivity(); renderSessions(); renderHero();
   }catch(e){}
 }
 
@@ -403,7 +723,8 @@ function connectStream(){
   es.addEventListener('init', e => { const d = JSON.parse(e.data); live = d.live; trace = d.trace || trace; streamOk = true; renderHero(); });
   es.addEventListener('live', e => {
     const d = JSON.parse(e.data); live = d.live;
-    if (d.session_id !== trace.session_id) trace = { session_id: d.session_id, events: [] };
+    const last = trace.events[trace.events.length - 1];
+    if (d.session_id !== trace.session_id || (d.point && last && d.point[0] < last[0])) trace = { session_id: d.session_id, events: [] };   // same rule as the server
     if (d.point) trace.events.push(d.point);
     streamOk = true; renderHero();
   });
@@ -420,7 +741,39 @@ async function pollLive(){
 // ---------------------------------------------------------------- interactions
 document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { period = b.dataset.p; try { localStorage.setItem('motionx-period', period); } catch {} renderTotals(); });
 document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem('motionx-view', view); } catch {} renderSessions(); });
+document.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { chartWin = Number(b.dataset.w); try { localStorage.setItem('motionx-window', chartWin); } catch {} renderHero(); });
+document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => { range = Number(b.dataset.r); daySel = null; try { localStorage.setItem('motionx-range', range); } catch {} renderActivity(); });
 $('more').onclick = () => { shown += 25; renderSessions(); };
+
+// ---------------------------------------------------------------- settings
+{
+  const dlg = $('setDlg'), f = $('setForm').elements;
+  $('openSet').onclick = () => {
+    if (!settings) return;
+    f.height_cm.value = settings.height_cm; f.weight_kg.value = settings.weight_kg; f.step_pct.value = Math.round(settings.step_factor * 100);
+    f.goal_type.value = settings.goal_type; f.goal_value.value = settings.goal_value; f.merge_min.value = Math.round(settings.merge_gap_s / 60);
+    $('setErr').textContent = '';
+    dlg.showModal();
+  };
+  $('setCancel').onclick = () => dlg.close();
+  f.goal_type.onchange = () => { f.goal_value.value = { walk_min: 30, distance_km: 3, steps: 5000 }[f.goal_type.value]; };   // a target in the new unit
+  $('setForm').onsubmit = async e => {
+    e.preventDefault();
+    const body = { height_cm: +f.height_cm.value, weight_kg: +f.weight_kg.value, step_factor: f.step_pct.value / 100,
+                   goal_type: f.goal_type.value, goal_value: +f.goal_value.value, merge_gap_s: f.merge_min.value * 60 };
+    try{
+      const r = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'HTTP ' + r.status);
+      dlg.close(); refreshSessions();
+    }catch(err){ $('setErr').textContent = 'Not saved: ' + err.message; }
+  };
+  if (!('closedBy' in HTMLDialogElement.prototype)){            // Safari: closing by a click outside, which closedby="any" gives elsewhere
+    const outside = e => { const r = dlg.getBoundingClientRect(); return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom; };
+    let pressedOut = false;
+    dlg.addEventListener('pointerdown', e => { pressedOut = outside(e); });
+    dlg.addEventListener('pointerup', e => { if (pressedOut && outside(e)) dlg.close(); });
+  }
+}
 
 connectStream(); pollLive(); refreshSessions();
 setInterval(pollLive, 1000);

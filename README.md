@@ -20,7 +20,7 @@ An ESP32, a tiny self‑hosted server, your walks in Apple Health: no cloud, no 
 <br>
 
 <p align="center">
-  <img src="docs/images/dashboard.gif" width="760" alt="MotionX dashboard during a walk: live speed, speed chart of the current session and daily totals">
+  <img src="docs/images/dashboard.gif" width="760" alt="MotionX dashboard during a walk: live speed, time, distance, calories and steps, speed chart of the current session, daily goal ring and steps per day over the last 30 days">
 </p>
 
 Got a MotionX walking pad with no app and no stats? An **ESP32** hidden inside listens to the
@@ -51,8 +51,9 @@ flash and survives power cuts.
 <td valign="top">
 
 **📊 Live dashboard**<br>
-Speed, time and distance update in real time (UDP + Server‑Sent Events), with daily, weekly and
-all‑time totals and the history of every session.
+Speed, time, distance, steps and calories update in real time (UDP + Server‑Sent Events), with a
+speed chart that stays readable on long walks, a daily goal with its streak, a chart of the last
+7 or 30 days, totals and the history of every session. A short pause does not split a walk.
 
 </td>
 <td valign="top">

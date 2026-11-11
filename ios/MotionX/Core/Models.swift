@@ -107,6 +107,7 @@ struct Trace: Decodable {
 struct Profile: Decodable, Equatable {
     var heightCm: Double = 175
     var weightKg: Double = 75
+    var stepFactor: Double?      // steps × this factor (dashboard settings); absent on older servers
 }
 
 /// Values recomputed by the server from the events.

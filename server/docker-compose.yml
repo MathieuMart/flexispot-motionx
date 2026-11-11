@@ -7,8 +7,8 @@ services:
     command: node server.js
     environment:
       - TZ=Europe/Paris          # your time zone (dates sent to Apple Health)
-      - HEIGHT_CM=175            # stride length estimate
-      - WEIGHT_KG=75             # calorie estimate
+      - HEIGHT_CM=175            # first values of the profile: once changed in the dashboard
+      - WEIGHT_KG=75             # settings, data/settings.json takes over
       - HEALTH_MIN_WALK_S=120    # ignore sessions shorter than 2 min for Apple Health
     ports:
       - "3000:3000/tcp"          # dashboard + API
